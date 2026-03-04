@@ -1,0 +1,61 @@
+@import 'tailwindcss';
+@import './theme.css';
+
+/* Global base */
+body {
+  font-family: var(--font-main);
+  background: var(--color-bg-gradient);
+  background-attachment: fixed;
+  color: var(--color-text);
+  min-height: 100dvh;
+  transition:
+    background 0.5s ease,
+    color 0.3s ease;
+}
+
+/* Glass morphism card */
+.glass-card {
+  background: var(--color-surface);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+}
+
+.glass-card-elevated {
+  background: var(--color-surface);
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-lavender-medium);
+  border-radius: var(--radius-full);
+}
+
+/* Metric values */
+.metric-value {
+  font-family: var(--font-mono);
+}
+
+/* Decorative blob */
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  pointer-events: none;
+}
