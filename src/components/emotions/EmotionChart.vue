@@ -19,7 +19,7 @@ const props = defineProps({
   entries: { type: Array, default: () => [] },
 })
 
-const { lavender, textMuted, surface, withAlpha } = useChartColors()
+const { lavender, textMuted, surface, surfaceSolid, withAlpha } = useChartColors()
 
 const chartOption = computed(() => {
   const grouped = {}
@@ -76,7 +76,7 @@ const chartOption = computed(() => {
         symbol: 'circle',
         symbolSize: 8,
         lineStyle: { width: 3, color: withAlpha(lavender, 0.8) },
-        itemStyle: { color: lavender.value, borderWidth: 2, borderColor: '#fff' },
+        itemStyle: { color: lavender.value, borderWidth: 2, borderColor: surfaceSolid.value },
         areaStyle: {
           color: {
             type: 'linear',

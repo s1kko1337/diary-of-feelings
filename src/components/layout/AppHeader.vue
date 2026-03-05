@@ -1,7 +1,7 @@
 <template>
   <header class="mobile-header lg:hidden">
     <router-link to="/" class="mobile-header-logo">
-      <div class="mobile-header-orb" />
+      <div class="mobile-header-mark" />
       <span>Diary of Feelings</span>
     </router-link>
 
@@ -38,12 +38,10 @@ const { isDark, toggleTheme } = useTheme()
   letter-spacing: -0.02em;
 }
 
-.mobile-header-orb {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-lavender), var(--color-peach), var(--color-mint));
-  box-shadow: 0 2px 8px rgb(184 165 216 / 0.3);
+.mobile-header-mark {
+  width: 18px;
+  height: 18px;
+  background: var(--color-accent);
 }
 
 .mobile-header-btn {
@@ -52,16 +50,15 @@ const { isDark, toggleTheme } = useTheme()
   justify-content: center;
   width: 38px;
   height: 38px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-md);
   color: var(--color-text-muted);
   background: var(--color-surface);
-  backdrop-filter: blur(12px);
   border: 1px solid var(--color-border);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .mobile-header-btn:hover {
-  color: var(--color-primary);
+  color: var(--color-accent);
 }
 </style>

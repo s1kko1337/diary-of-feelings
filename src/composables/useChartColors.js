@@ -27,11 +27,12 @@ export function useChartColors() {
   const pink = computed(() => getCssVar('--color-rose'))
   const textMuted = computed(() => getCssVar('--color-text-muted'))
   const surface = computed(() => getCssVar('--color-surface'))
+  const surfaceSolid = computed(() => getCssVar('--color-surface-solid'))
 
   function withAlpha(colorRef, alpha) {
     const hex = typeof colorRef === 'string' ? colorRef : colorRef.value
     return toRgba(hex, alpha)
   }
 
-  return { lavender, peach, mint, pink, textMuted, surface, withAlpha }
+  return { lavender, peach, mint, pink, textMuted, surface, surfaceSolid, withAlpha }
 }

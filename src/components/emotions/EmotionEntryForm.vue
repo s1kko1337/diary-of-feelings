@@ -177,7 +177,7 @@ function handleSubmit() {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: white;
+  background: var(--color-surface-solid);
   border: 2px solid var(--accent, var(--color-primary));
   box-shadow: 0 2px 8px rgb(0 0 0 / 0.15);
   cursor: grab;
@@ -187,7 +187,7 @@ function handleSubmit() {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: white;
+  background: var(--color-surface-solid);
   border: 2px solid var(--accent, var(--color-primary));
   box-shadow: 0 2px 8px rgb(0 0 0 / 0.15);
   cursor: grab;
@@ -268,7 +268,7 @@ function handleSubmit() {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: white;
+  background: var(--color-surface-solid);
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.15);
   transition: transform 0.2s ease;
 }
@@ -296,8 +296,7 @@ function handleSubmit() {
 }
 
 .submit-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-card);
+  opacity: 0.85;
 }
 
 .submit-btn:disabled {

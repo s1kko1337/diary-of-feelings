@@ -9,7 +9,7 @@
       subtitle="Как тебя зовут? Это поможет сделать общение теплее."
     >
       <template #icon>
-        <div class="welcome-orb" />
+        <div class="welcome-mark" />
       </template>
       <input
         v-model="answers.name"
@@ -241,25 +241,10 @@ async function handleSkip() {
   padding: 2rem 0;
 }
 
-.welcome-orb {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-lavender), var(--color-peach), var(--color-mint));
-  box-shadow:
-    0 8px 32px rgb(184 165 216 / 0.3),
-    0 0 60px rgb(184 165 216 / 0.15);
-  animation: pulse-soft 4s ease-in-out infinite;
-}
-
-@keyframes pulse-soft {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
+.welcome-mark {
+  width: 48px;
+  height: 48px;
+  background: var(--color-accent);
 }
 
 .name-input {
@@ -301,7 +286,7 @@ async function handleSkip() {
   align-items: center;
   gap: 6px;
   padding: 12px 24px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-md);
   font-size: 0.85rem;
   font-weight: 600;
   font-family: var(--font-main);
@@ -322,13 +307,12 @@ async function handleSkip() {
 
 .nav-btn--next {
   background: var(--color-primary);
-  color: white;
+  color: var(--color-surface-solid);
   margin-left: auto;
 }
 
 .nav-btn--next:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-card);
+  opacity: 0.85;
 }
 
 .nav-btn--next:disabled {

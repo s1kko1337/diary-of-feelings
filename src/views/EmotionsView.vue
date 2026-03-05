@@ -2,62 +2,76 @@
   <div class="emotions-page">
     <h1 class="page-title">Дневник эмоций</h1>
 
-    <!-- Wheel or Form -->
-    <section class="glass-card">
-      <p class="section-label">Что ты сейчас чувствуешь?</p>
+    <!-- Loading -->
+    <div v-if="loading" class="skeleton-list">
+      <div v-for="i in 3" :key="i" class="skeleton-card" />
+    </div>
 
-      <EmotionWheel v-if="!selectedEmotion" @select="handleEmotionSelect" />
+    <!-- Error -->
+    <div v-else-if="error" class="error-banner">
+      <AlertCircleIcon :size="18" :stroke-width="1.8" />
+      <span>Не удалось загрузить данные. Попробуй обновить страницу.</span>
+    </div>
 
-      <EmotionEntryForm
-        v-else
-        :emotion="selectedEmotion"
-        :emotion-category="selectedCategory"
-        @submit="handleSubmit"
-        @change-emotion="resetSelection"
-      />
-    </section>
+    <template v-else>
+      <!-- Wheel or Form -->
+      <section class="flat-card section-card">
+        <p class="section-label">Что ты сейчас чувствуешь?</p>
 
-    <!-- Patterns -->
-    <section v-if="patterns && patterns.totalEntries > 0" class="glass-card">
-      <p class="section-label">Паттерны за неделю</p>
-      <div class="patterns">
-        <div class="pattern-stat">
-          <span class="pattern-value">{{ patterns.totalEntries }}</span>
-          <span class="pattern-name">записей</span>
+        <EmotionWheel v-if="!selectedEmotion" @select="handleEmotionSelect" />
+
+        <EmotionEntryForm
+          v-else
+          :emotion="selectedEmotion"
+          :emotion-category="selectedCategory"
+          @submit="handleSubmit"
+          @change-emotion="resetSelection"
+        />
+      </section>
+
+      <!-- Patterns -->
+      <section v-if="patterns && patterns.totalEntries > 0" class="flat-card section-card">
+        <p class="section-label">Паттерны за неделю</p>
+        <div class="patterns">
+          <div class="pattern-stat">
+            <span class="pattern-value">{{ patterns.totalEntries }}</span>
+            <span class="pattern-name">записей</span>
+          </div>
+          <div class="pattern-stat">
+            <span class="pattern-value">{{ patterns.averageIntensity }}</span>
+            <span class="pattern-name">средняя интенсивность</span>
+          </div>
+          <div v-for="top in patterns.topEmotions" :key="top.emotion" class="pattern-stat">
+            <span class="pattern-value">{{ emotionEmoji(top.emotion) }} {{ top.count }}</span>
+            <span class="pattern-name">{{ emotionLabel(top.emotion) }}</span>
+          </div>
         </div>
-        <div class="pattern-stat">
-          <span class="pattern-value">{{ patterns.averageIntensity }}</span>
-          <span class="pattern-name">средняя интенсивность</span>
-        </div>
-        <div v-for="top in patterns.topEmotions" :key="top.emotion" class="pattern-stat">
-          <span class="pattern-value">{{ emotionEmoji(top.emotion) }} {{ top.count }}</span>
-          <span class="pattern-name">{{ emotionLabel(top.emotion) }}</span>
-        </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- Chart -->
-    <section v-if="history.length > 1" class="glass-card">
-      <p class="section-label">Динамика</p>
-      <EmotionChart :entries="history" />
-    </section>
+      <!-- Chart -->
+      <section v-if="history.length > 1" class="flat-card section-card">
+        <p class="section-label">Динамика</p>
+        <EmotionChart :entries="history" />
+      </section>
 
-    <!-- Today's entries -->
-    <section class="glass-card">
-      <p class="section-label">Сегодня</p>
-      <EmotionHistory :entries="todayEntries" @delete="handleDelete" />
-    </section>
+      <!-- Today's entries -->
+      <section class="flat-card section-card">
+        <p class="section-label">Сегодня</p>
+        <EmotionHistory :entries="todayEntries" @delete="handleDelete" />
+      </section>
 
-    <!-- Full history -->
-    <section v-if="olderEntries.length > 0" class="glass-card">
-      <p class="section-label">Ранее</p>
-      <EmotionHistory :entries="olderEntries" @delete="handleDelete" />
-    </section>
+      <!-- Full history -->
+      <section v-if="olderEntries.length > 0" class="flat-card section-card">
+        <p class="section-label">Ранее</p>
+        <EmotionHistory :entries="olderEntries" @delete="handleDelete" />
+      </section>
+    </template>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { AlertCircleIcon } from 'lucide-vue-next'
 import { useEmotionsStore } from '@/stores/emotions'
 import { getEmotion } from '@/api/mock/data/emotions-wheel'
 import EmotionWheel from '@/components/emotions/EmotionWheel.vue'
@@ -67,6 +81,8 @@ import EmotionChart from '@/components/emotions/EmotionChart.vue'
 
 const store = useEmotionsStore()
 
+const loading = ref(true)
+const error = ref(false)
 const selectedEmotion = ref(null)
 const selectedCategory = ref(null)
 
@@ -107,7 +123,13 @@ async function handleDelete(id) {
 }
 
 onMounted(async () => {
-  await Promise.all([store.loadToday(), store.loadHistory(), store.loadPatterns()])
+  try {
+    await Promise.all([store.loadToday(), store.loadHistory(), store.loadPatterns()])
+  } catch {
+    error.value = true
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 
@@ -115,15 +137,20 @@ onMounted(async () => {
 .emotions-page {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: var(--space-xl);
   padding: 1rem 0;
 }
 
 .page-title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-size: 2.25rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.15;
   color: var(--color-text);
+}
+
+.section-card {
+  padding: 1.25rem;
 }
 
 .section-label {
@@ -162,5 +189,47 @@ onMounted(async () => {
 .pattern-name {
   font-size: 0.7rem;
   color: var(--color-text-muted);
+}
+
+/* Loading skeleton */
+.skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-card {
+  height: 120px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-hover) 25%,
+    var(--color-surface) 50%,
+    var(--color-surface-hover) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Error */
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-radius: var(--radius-lg);
+  background: var(--color-rose-soft);
+  border: 1px solid rgb(240 184 192 / 0.3);
+  color: var(--color-text);
+  font-size: 0.85rem;
 }
 </style>

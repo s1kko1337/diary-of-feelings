@@ -1,7 +1,9 @@
 <template>
   <div class="history">
     <div v-if="entries.length === 0" class="history-empty">
-      <p>Пока нет записей. Начни с выбора эмоции выше.</p>
+      <div class="empty-mark" />
+      <p class="empty-title">Пока нет записей</p>
+      <p class="empty-hint">Начни с выбора эмоции выше -- это займёт минуту</p>
     </div>
 
     <div v-for="entry in entries" :key="entry.id" class="history-entry">
@@ -64,18 +66,42 @@ function formatDate(iso) {
 }
 
 .history-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
-  padding: 2rem 1rem;
+  padding: 2.5rem 1rem;
+  gap: 8px;
+}
+
+.empty-mark {
+  width: 48px;
+  height: 2px;
+  background: var(--color-border);
+  margin-bottom: 0.75rem;
+  pointer-events: none;
+}
+
+.empty-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.empty-hint {
+  font-size: 0.82rem;
   color: var(--color-text-muted);
-  font-size: 0.85rem;
+  line-height: 1.5;
+  max-width: 280px;
 }
 
 .history-entry {
-  padding: 12px 14px;
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  transition: transform 0.2s ease;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.history-entry:last-child {
+  border-bottom: none;
 }
 
 .entry-header {

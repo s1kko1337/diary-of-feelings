@@ -1,49 +1,72 @@
 /* Light theme (default) */
 :root {
-  /* Background — soft warm gradient */
-  --color-bg: #fdf6ee;
-  --color-bg-gradient: linear-gradient(145deg, #fdf6ee 0%, #f3e8f9 50%, #e8f4f0 100%);
-  --color-surface: rgb(255 255 255 / 0.7);
+  /* Background — flat white */
+  --color-bg: #ffffff;
+  --color-bg-gradient: #ffffff;
+  --color-surface: #f7f7f7;
   --color-surface-solid: #ffffff;
-  --color-surface-hover: rgb(255 255 255 / 0.9);
+  --color-surface-hover: #f0f0f0;
 
-  /* Palette */
-  --color-lavender: #c4b5e0;
-  --color-lavender-soft: rgb(196 181 224 / 0.15);
-  --color-lavender-medium: rgb(196 181 224 / 0.3);
-  --color-peach: #f8c9a0;
-  --color-peach-soft: rgb(248 201 160 / 0.2);
-  --color-mint: #a8dfc8;
-  --color-mint-soft: rgb(168 223 200 / 0.2);
-  --color-cream: #fdf0e0;
-  --color-rose: #f0b8c0;
-  --color-rose-soft: rgb(240 184 192 / 0.15);
+  /* Accent (Indigo) */
+  --color-accent: #6366f1;
+  --color-accent-soft: #eef2ff;
+  --color-accent-text: #4338ca;
+  --color-accent-hover: #4f46e5;
+  --color-accent-subtle: #e0e7ff;
+  --color-accent-mist: #f5f3ff;
+
+  /* Warm accent */
+  --color-warm: #f59e0b;
+  --color-warm-soft: #fffbeb;
+
+  /* Backward-compatible palette aliases */
+  --color-lavender: #6366f1;
+  --color-lavender-soft: #eef2ff;
+  --color-lavender-medium: #818cf8;
+  --color-peach: #f97316;
+  --color-peach-soft: #fff7ed;
+  --color-mint: #10b981;
+  --color-mint-soft: #ecfdf5;
+  --color-cream: #f7f7f7;
+  --color-rose: #f43f5e;
+  --color-rose-soft: #fff1f2;
 
   /* Semantic */
-  --color-primary: #b8a5d8;
-  --color-primary-soft: rgb(184 165 216 / 0.2);
-  --color-text: #4a4458;
-  --color-text-secondary: #7b7394;
-  --color-text-muted: #a8a0b8;
-  --color-border: rgb(184 165 216 / 0.15);
-  --color-danger: #e8a0a0;
-  --color-success: #a0d8b8;
+  --color-primary: #6366f1;
+  --color-primary-soft: #eef2ff;
+  --color-primary-text: #4338ca;
+  --color-text: #0f0f0f;
+  --color-text-secondary: #444444;
+  --color-text-muted: #888888;
+  --color-border: #e8e8e8;
+  --color-danger: #ef4444;
+  --color-success: #22c55e;
 
   /* Typography */
   --font-main: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* Shape — rounded, organic */
-  --radius-sm: 0.5rem;
-  --radius-md: 0.875rem;
-  --radius-lg: 1.25rem;
-  --radius-xl: 1.75rem;
+  /* Shape — human, modern minimal */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
   --radius-full: 9999px;
 
-  /* Depth — soft colored shadows */
-  --shadow-soft: 0 2px 16px rgb(184 165 216 / 0.08);
-  --shadow-card: 0 4px 24px rgb(184 165 216 / 0.1);
-  --shadow-float: 0 8px 32px rgb(184 165 216 / 0.15);
+  /* Depth — soft ambient shadows */
+  --shadow-soft: 0 1px 3px rgb(0 0 0 / 0.04), 0 1px 2px rgb(0 0 0 / 0.02);
+  --shadow-card: 0 1px 3px rgb(0 0 0 / 0.04), 0 1px 2px rgb(0 0 0 / 0.02);
+  --shadow-float: 0 4px 12px rgb(0 0 0 / 0.06), 0 1px 3px rgb(0 0 0 / 0.04);
+  --shadow-elevated: 0 8px 24px rgb(0 0 0 / 0.08), 0 2px 6px rgb(0 0 0 / 0.04);
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 40px;
+  --space-2xl: 64px;
+  --space-section: 48px;
 
   /* Layout */
   --sidebar-width: 260px;
@@ -51,35 +74,47 @@
   --bottom-nav-height: 72px;
 }
 
-/* Dark theme — warm, deep */
+/* Dark theme — flat, warm */
 .dark {
-  --color-bg: #181215;
-  --color-bg-gradient: linear-gradient(145deg, #181215 0%, #1a1520 50%, #151a18 100%);
-  --color-surface: rgb(40 32 45 / 0.6);
-  --color-surface-solid: #28202d;
-  --color-surface-hover: rgb(50 40 55 / 0.8);
+  --color-bg: #0a0a0a;
+  --color-bg-gradient: #0a0a0a;
+  --color-surface: #141414;
+  --color-surface-solid: #0a0a0a;
+  --color-surface-hover: #1e1e1e;
 
-  --color-lavender: #c8b8e8;
-  --color-lavender-soft: rgb(200 184 232 / 0.1);
-  --color-lavender-medium: rgb(200 184 232 / 0.2);
-  --color-peach: #f0c8a0;
-  --color-peach-soft: rgb(240 200 160 / 0.1);
-  --color-mint: #a0d8c0;
-  --color-mint-soft: rgb(160 216 192 / 0.1);
-  --color-cream: #3d3028;
-  --color-rose: #e0a8b0;
-  --color-rose-soft: rgb(224 168 176 / 0.1);
+  --color-accent: #6366f1;
+  --color-accent-soft: #1e1b4b;
+  --color-accent-text: #818cf8;
+  --color-accent-hover: #818cf8;
+  --color-accent-subtle: #312e81;
+  --color-accent-mist: #1e1b4b;
 
-  --color-primary: #c8b8e8;
-  --color-primary-soft: rgb(200 184 232 / 0.15);
-  --color-text: #e8e0f0;
-  --color-text-secondary: #b0a8c0;
-  --color-text-muted: #807898;
-  --color-border: rgb(200 184 232 / 0.1);
-  --color-danger: #e8a0a0;
-  --color-success: #a0d8b8;
+  --color-warm: #fbbf24;
+  --color-warm-soft: #1c1508;
 
-  --shadow-soft: 0 2px 16px rgb(0 0 0 / 0.2);
-  --shadow-card: 0 4px 24px rgb(0 0 0 / 0.25);
-  --shadow-float: 0 8px 32px rgb(0 0 0 / 0.3);
+  --color-lavender: #6366f1;
+  --color-lavender-soft: #1e1b4b;
+  --color-lavender-medium: #818cf8;
+  --color-peach: #fb923c;
+  --color-peach-soft: #1c0a00;
+  --color-mint: #34d399;
+  --color-mint-soft: #022c22;
+  --color-cream: #141414;
+  --color-rose: #fb7185;
+  --color-rose-soft: #1f0a0e;
+
+  --color-primary: #6366f1;
+  --color-primary-soft: #1e1b4b;
+  --color-primary-text: #818cf8;
+  --color-text: #f0f0f0;
+  --color-text-secondary: #aaaaaa;
+  --color-text-muted: #666666;
+  --color-border: #2a2a2a;
+  --color-danger: #ef4444;
+  --color-success: #22c55e;
+
+  --shadow-soft: 0 1px 3px rgb(0 0 0 / 0.2), 0 1px 2px rgb(0 0 0 / 0.1);
+  --shadow-card: 0 1px 3px rgb(0 0 0 / 0.3);
+  --shadow-float: 0 4px 12px rgb(0 0 0 / 0.4);
+  --shadow-elevated: 0 8px 24px rgb(0 0 0 / 0.5), 0 2px 6px rgb(0 0 0 / 0.3);
 }

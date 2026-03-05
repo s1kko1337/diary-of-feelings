@@ -179,26 +179,25 @@ async function handleReset() {
 .settings {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: var(--space-xl);
   padding: 1rem 0;
 }
 
 .settings-title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-size: 2.25rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.15;
   color: var(--color-text);
   margin-bottom: 0.5rem;
 }
 
 .settings-card {
   background: var(--color-surface);
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
-  border: 1px solid var(--color-border);
+  border: none;
   border-radius: var(--radius-xl);
   padding: 1.25rem;
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--shadow-card);
 }
 
 .settings-card--danger {
@@ -281,7 +280,7 @@ async function handleReset() {
 .toggle {
   width: 44px;
   height: 24px;
-  border-radius: var(--radius-full);
+  border-radius: 2px;
   background: var(--color-border);
   padding: 2px;
   transition: background 0.2s ease;
@@ -295,8 +294,8 @@ async function handleReset() {
 .toggle-knob {
   width: 20px;
   height: 20px;
-  border-radius: 50%;
-  background: white;
+  border-radius: 1px;
+  background: var(--color-surface-solid);
   box-shadow: 0 1px 4px rgb(0 0 0 / 0.15);
   transition: transform 0.2s ease;
 }
@@ -326,7 +325,7 @@ async function handleReset() {
 }
 
 .cbt-mode-btn:hover {
-  transform: translateY(-1px);
+  border-color: var(--color-primary);
 }
 
 .cbt-mode-btn--active {

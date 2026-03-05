@@ -3,7 +3,7 @@
     <div class="navbar-inner">
       <!-- Logo -->
       <router-link to="/" class="navbar-logo">
-        <div class="navbar-logo-orb" />
+        <div class="navbar-logo-mark" />
         <span>Diary of Feelings</span>
       </router-link>
 
@@ -58,25 +58,22 @@ const navItems = [
 <style scoped>
 .navbar {
   position: fixed;
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 50;
-  width: calc(100% - 48px);
-  max-width: 960px;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .navbar-inner {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 8px;
-  background: var(--color-surface);
-  -webkit-backdrop-filter: blur(24px);
-  backdrop-filter: blur(24px);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-full);
-  box-shadow: var(--shadow-card);
+  padding: 0 24px;
+  height: 56px;
+  max-width: 960px;
+  margin: 0 auto;
 }
 
 /* Logo */
@@ -84,7 +81,7 @@ const navItems = [
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 14px 6px 10px;
+  padding: 6px 14px 6px 0;
   text-decoration: none;
   color: var(--color-text);
   font-size: 0.85rem;
@@ -94,12 +91,10 @@ const navItems = [
   flex-shrink: 0;
 }
 
-.navbar-logo-orb {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-lavender), var(--color-peach), var(--color-mint));
-  box-shadow: 0 2px 8px rgb(184 165 216 / 0.3);
+.navbar-logo-mark {
+  width: 20px;
+  height: 20px;
+  background: var(--color-accent);
 }
 
 /* Links */
@@ -113,7 +108,7 @@ const navItems = [
 
 .navbar-link {
   padding: 8px 14px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-md);
   font-size: 0.8rem;
   font-weight: 500;
   color: var(--color-text-secondary);
@@ -128,8 +123,8 @@ const navItems = [
 }
 
 .navbar-link--active {
-  color: var(--color-text);
-  background: var(--color-primary-soft);
+  color: var(--color-accent-text);
+  background: var(--color-accent-soft);
 }
 
 .navbar-link--icon {

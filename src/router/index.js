@@ -25,9 +25,15 @@ const router = createRouter({
       component: () => import('@/views/CbtView.vue'),
     },
     {
+      path: '/cbt/new',
+      name: 'cbt-new',
+      component: () => import('@/views/CbtEntryView.vue'),
+    },
+    {
       path: '/cbt/:id',
       name: 'cbt-entry',
       component: () => import('@/views/CbtEntryView.vue'),
+      props: true,
     },
     {
       path: '/tasks',

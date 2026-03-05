@@ -1,47 +1,53 @@
-# Frontend Lead — Agent Memory
+# Frontend Lead -- Agent Memory
 
 ## Project State (as of 2026-03-05)
 
 ### Fully Implemented
 - Core shell: App.vue, AppNavbar, AppHeader, AppBottomNav
 - Theme system: theme.css (light + dark), useTheme composable
-- Onboarding: 6-step flow with TopicSelector, OptionSelector, OnboardingProgress, OnboardingStep
-- Emotion Diary: EmotionWheel, EmotionEntryForm, EmotionHistory, EmotionChart (echarts)
-- API layer: client.js (request + ApiError), emotions.js wrapper, emotions.mock.js (localStorage)
-- Stores: user.js, emotions.js (both Pinia composition)
-- HomeView: hero + quick emotions + daily articles (static stubs) + AI advice placeholder
+- Onboarding: 6-step flow (TopicSelector, OptionSelector, OnboardingProgress, OnboardingStep)
+- Emotion Diary: EmotionWheel, EmotionEntryForm, EmotionHistory (warm empty state), EmotionChart (echarts)
+- CBT Diary (SMER): CbtView (list + filters + stats), CbtEntryView (full form + advanced mode), CbtEntryCard, CbtStatCard, CbtProgressBar, CbtEmotionPicker, CbtDistortionPicker
+- API layer: client.js, emotions.js, cbt.js, user.js + corresponding mocks
+- Stores: user.js, emotions.js, cbt.js (all Pinia composition)
+- HomeView: hero + quick emotions + article stubs (static) + AI advice placeholder
 - ProfileView: full settings (theme, notifications, CBT mode, sound, data reset)
-- MoreView: mobile overflow nav menu
+- MoreView: glassmorphism-styled overflow nav
 
-### Stub Views (title only, no functionality)
-- CbtView.vue, CbtEntryView.vue, TasksView.vue, TimeTrackerView.vue
-- NotesView.vue, LibraryView.vue, ReportView.vue, ArticleView.vue
+### Stub Views (consistent page-title pattern, no functionality)
+- TasksView, TimeTrackerView, NotesView, LibraryView, ReportView, ArticleView
 
-### Audit Issues Found
-- Stub views use inline styles `:style="{ color: 'var(--color-text)' }"` -- violates no-inline-styles rule
-- Stub views use Tailwind classes for title but inline style for color -- inconsistent
-- HomeView line 47: `style="margin: 0"` -- inline style violation
-- MoreView uses inline `:style` on links -- should use scoped CSS
-- glass-card classes in main.css lack `-webkit-backdrop-filter` for Safari
-- EmotionChart hardcodes colors (rgba values) instead of using CSS variables
-- AppNavbar lacks `-webkit-backdrop-filter` alongside `backdrop-filter`
-- HomeView .card duplicates glassmorphism pattern instead of using .glass-card global class
+### Design Audit (completed 2026-03-05)
+All known violations fixed:
+- `-webkit-backdrop-filter` added where missing (AppHeader)
+- Hardcoded `white`/`#fff` replaced with `var(--color-surface-solid)` everywhere
+- EmotionsView: loading skeleton + error state added
+- EmotionHistory: warm empty state with decorative orb
+- MoreView: glassmorphism + hover lift on links
+- AppBottomNav: hover state for non-active items
+- HomeView: article cards got glass effect, .card de-duplication, AI card got glass-card-elevated
+- useChartColors: surfaceSolid ref added
+- Stub views: consistent page-title pattern (1.75rem, 700, -0.03em)
 
 ### Key Patterns Confirmed
-- API pattern: src/api/xxx.js wraps src/api/mock/xxx.mock.js via request()
+- CSS custom property binding via `:style` is acceptable Vue pattern (NOT an inline-style violation)
+- API: src/api/xxx.js wraps src/api/mock/xxx.mock.js via request()
 - Mock storage: localStorage with STORAGE_KEY constant
-- Store pattern: Pinia composition with async actions wrapping API calls
-- Composable pattern: useXxx.js exporting function useXxx() returning refs/computed
-- Theme: singleton isDark ref outside function, shared across instances
-- Emotion wheel: two-level drill-down (category -> emotions), data in emotions-wheel.js
+- Store: Pinia composition with async actions wrapping API calls
+- Composable: useXxx.js exporting function useXxx() returning refs/computed
+- Theme: singleton isDark ref outside function
+- Emotion wheel: two-level drill-down, data in emotions-wheel.js
+- CBT form: progressive disclosure (basic SMER -> advanced with distortions/challenging)
 
 ### Priority Order for Next Modules
-1. CBT Diary (CMER) -- core therapeutic feature, design specs in CLAUDE.md
-2. Daily Articles -- central content feature, most visible to users
-3. Notes -- low friction quick capture, simple to implement
+1. Daily Articles -- central content feature, HomeView stubs ready
+2. AI Assistant -- HomeView placeholder ready, depends on emotions + CBT data
+3. Notes -- low friction quick capture
 4. Tasks -- contextual planner with intentions
-5. Library -- aggregation view, depends on other modules having content
-6. Time Tracker -- lower priority, awareness tool
-7. Report -- depends on accumulated data from other modules
+5. Library -- aggregation, depends on other modules
+6. Time Tracker -- awareness tool
+7. Report -- depends on accumulated data
 
-See `task-specs.md` for detailed delegation specs.
+### Roadmap
+See `docs/roadmap.md` for full roadmap with statuses.
+See `task-specs.md` for delegation specs archive.

@@ -1,337 +1,221 @@
-# Дорожная карта разработки
+# Дорожная карта разработки — Diary of Feelings
 
-## Фаза 0 — Фундамент
-
-> Базовая инфраструктура: без неё ничего не работает.
-
-### 0.1 Темизация и глобальные стили
-
-- [ ]  Создать `src/assets/theme.css` — CSS-переменные (light + dark)
-- [ ]  Создать `src/assets/main.css` — импорт Tailwind, подключение шрифтов Inter и JetBrains Mono
-- [ ]  Подключить стили в `main.js`
-- [ ]  Настроить Tailwind CSS 4 через `@tailwindcss/vite` (уже в зависимостях)
-
-### 0.2 API-клиент
-
-- [ ]  Создать `src/api/client.js` — класс `ApiError`, функция `request(handler, opts)`
-- [ ]  Реализовать эмуляцию задержки (300–800ms по умолчанию)
-- [ ]  Реализовать таймаут запроса
-
-### 0.3 Layout и навигация
-
-- [ ]  Создать `src/components/layout/AppSidebar.vue` — десктоп-навигация
-- [ ]  Создать `src/components/layout/AppHeader.vue` — заголовок + переключение темы
-- [ ]  Создать `src/components/layout/AppBottomNav.vue` — мобильная навигация
-- [ ]  Обновить `App.vue` — layout-обёртка с sidebar + header + router-view
-- [ ]  Реализовать `src/composables/useTheme.js` — переключение dark/light, сохранение в localStorage
-
-### 0.4 Роутер
-
-- [ ]  Настроить все маршруты в `src/router/index.js` (lazy-load)
-- [ ]  Создать заглушки для всех View-компонентов (пустые шаблоны)
-- [ ]  Добавить navigation guard для онбординга
-
-### 0.5 Store пользователя
-
-- [ ]  Создать `src/stores/user.js` — профиль, тема, isOnboarded
-- [ ]  Создать `src/api/user.js` + `src/api/mock/user.mock.js`
-- [ ]  Удалить демо-стор `counter.js`
-
-**Результат:** Приложение запускается, навигация работает, тема переключается, layout адаптивный.
+> Актуальное состояние на 2026-03-05
 
 ---
 
-## Фаза 1 — Главная страница и статьи
+## Реализованные модули
 
-> Первый контент, который видит пользователь каждый день.
+### Фаза 0 — Фундамент
 
-### 1.1 Store и API статей
+| Компонент | Статус | Файлы |
+|-----------|--------|-------|
+| Темизация и глобальные стили | Done | `theme.css`, `main.css` (light + dark, CSS variables) |
+| API-клиент | Done | `api/client.js` (ApiError, request(), delay, timeout) |
+| Layout и навигация | Done | `AppNavbar.vue` (pill, desktop), `AppHeader.vue` (mobile), `AppBottomNav.vue` (mobile bottom), `MoreView.vue` (overflow nav) |
+| Роутер | Done | `router/index.js` (lazy-load, onboarding guard) |
+| Store пользователя | Done | `stores/user.js`, `api/user.js`, `api/mock/user.mock.js` |
+| Composables | Done | `useTheme.js`, `useChartColors.js`, `useEmotionWheel.js` |
 
-- [ ]  Создать `src/stores/articles.js` — dailySet, readingProgress
-- [ ]  Создать `src/api/articles.js` + `src/api/mock/articles.mock.js`
-- [ ]  Мок: генерация 3 статей с разными тонами (разогрев / глубина / рефлексия)
+### Фаза 2 — Дневник эмоций
 
-### 1.2 Главная страница (HomeView)
+| Компонент | Статус | Файлы |
+|-----------|--------|-------|
+| Store и API эмоций | Done | `stores/emotions.js`, `api/emotions.js`, `api/mock/emotions.mock.js` |
+| Колесо эмоций | Done | `EmotionWheel.vue`, `useEmotionWheel.js`, `emotions-wheel.js` data |
+| Запись эмоции | Done | `EmotionEntryForm.vue` (intensity slider, note, time capsule) |
+| История и визуализация | Done | `EmotionHistory.vue`, `EmotionChart.vue` (ECharts line chart) |
+| EmotionsView | Done | Loading skeleton, error state, patterns, chart, history |
 
-- [ ]  `src/views/HomeView.vue` — три карточки статей дня
-- [ ]  `src/components/articles/ArticleCard.vue` — превью с иконкой тона, прогресс
-- [ ]  Секция «Как ты сегодня?» — быстрый вход в дневник эмоций
-- [ ]  Секция AI-совета (заглушка, заполнится в фазе 5)
+### Фаза 3 — КПТ-дневник (СМЭР)
 
-### 1.3 Чтение статьи
+| Компонент | Статус | Файлы |
+|-----------|--------|-------|
+| Store и API | Done | `stores/cbt.js`, `api/cbt.js`, `api/mock/cbt.js`, `data/distortions.js` |
+| CbtView (список) | Done | Stats, filters (time + distortion), skeleton loading, error/empty states, TransitionGroup |
+| CbtEntryView (форма) | Done | Full SMEAR form, basic + advanced mode, progress bar, mount animation |
+| CbtEntryCard | Done | Glass card with orb, date, situation preview, emotion/distortion badges |
+| CbtStatCard | Done | Glass card with metric value, label, trend icon |
+| CbtProgressBar | Done | 4-step progress (S-M-E-R) with check icons |
+| CbtEmotionPicker | Done | Multi-emotion picker with search, intensity sliders, transitions |
+| CbtDistortionPicker | Done | Grid picker with icons, descriptions, selection states |
 
-- [ ]  `src/views/ArticleView.vue` — полноэкранный ридер
-- [ ]  `src/components/articles/ArticleReader.vue` — прогресс-бар чтения (scroll-based)
-- [ ]  `src/components/articles/ThoughtOfDay.vue` — мысль после прочтения
-- [ ]  Кнопка «Сохранить в библиотеку»
+### Фаза 7 — Онбординг и профиль
 
-**Результат:** Пользователь открывает приложение, видит 3 статьи, читает, прогресс сохраняется.
+| Компонент | Статус | Файлы |
+|-----------|--------|-------|
+| Онбординг | Done | `OnboardingView.vue`, 6-step flow (name, difficulties, goals, day type, topics, feedback style) |
+| Компоненты онбординга | Done | `OnboardingStep.vue`, `OnboardingProgress.vue`, `TopicSelector.vue`, `OptionSelector.vue` |
+| Профиль и настройки | Done | `ProfileView.vue` (name, theme, notifications, CBT mode, sound, data reset) |
 
----
+### Главная страница
 
-## Фаза 2 — Дневник эмоций
-
-> Ежедневный чекин — ядро приложения.
-
-### 2.1 Store и API эмоций
-
-- [ ]  Создать `src/stores/emotions.js` — entries, todayEntry, weekHistory
-- [ ]  Создать `src/api/emotions.js` + `src/api/mock/emotions.mock.js`
-- [ ]  Мок: localStorage, генерация истории за 30 дней
-
-### 2.2 Колесо эмоций
-
-- [ ]  `src/components/emotions/EmotionWheel.vue` — интерактивный выбор эмоций
-- [ ]  Структура: 6–8 базовых эмоций → 3–5 вложенных каждая
-- [ ]  Анимация выбора, визуальный фидбэк
-
-### 2.3 Запись эмоции
-
-- [ ]  `src/components/emotions/EmotionIntensity.vue` — слайдер 0–10
-- [ ]  Поле «Одна строка в день» — текстовый инпут
-- [ ]  Чекбокс «Тайм-капсула» (увидишь через 30 дней)
-- [ ]  Сохранение записи
-
-### 2.4 История и визуализация
-
-- [ ]  `src/views/EmotionsView.vue` — запись + история + календарь
-- [ ]  `src/components/emotions/EmotionCalendar.vue` — тепловая карта месяца (ECharts)
-- [ ]  `src/components/emotions/EmotionEntry.vue` — карточка записи в истории
-- [ ]  Фильтрация по дате и эмоции
-
-### 2.5 Тайм-капсулы
-
-- [ ]  `src/composables/useTimeCapsule.js` — логика (30 дней)
-- [ ]  `src/components/ui/TimeCapsuleBanner.vue` — баннер «У тебя есть послание из прошлого»
-- [X]  Показ на главной, когда тайм-капсула «созрела»
-
-**Результат:** Пользователь выбирает эмоцию на колесе, пишет строку, видит историю на календаре, получает тайм-капсулы.
+| Компонент | Статус | Примечание |
+|-----------|--------|------------|
+| HomeView | Done (partial) | Hero + quick emotions + article stubs (static) + AI advice placeholder |
+| App.vue shell | Done | 3 decorative orbs, navbar + header + bottom nav + main area |
 
 ---
 
-## Фаза 3 — КПТ-дневник (СМЭР)
+## Заглушки (только заголовок, без функциональности)
 
-> Глубокая проработка ситуаций для осознанных пользователей.
-
-### 3.1 Store и API
-
-- [ ]  Создать `src/stores/cbt.js` — entries, currentEntry, mode
-- [ ]  Создать `src/api/cbt.js` + `src/api/mock/cbt.mock.js`
-- [ ]  Мок: 5–10 примеров СМЭР-записей разной полноты
-
-### 3.2 Форма записи
-
-- [ ]  `src/components/cbt/CbtEntryForm.vue` — базовый режим (С + М + Э)
-- [ ]  Переключатель «Базовый / Продвинутый» режим
-- [ ]  Продвинутый режим: + Реакция, Когнитивное искажение, Оспаривание, Альтернативная мысль, Эмоции после
-- [ ]  Множественные эмоции с интенсивностью в одной записи
-
-### 3.3 Когнитивные искажения
-
-- [ ]  `src/components/cbt/CbtDistortionPicker.vue` — выбор из списка с описанием
-- [ ]  Список: катастрофизация, чтение мыслей, чёрно-белое мышление, персонализация, сверхобобщение, долженствование, обесценивание, эмоциональное обоснование, навешивание ярлыков, туннельное видение
-- [ ]  Подсказка-описание для каждого искажения
-
-### 3.4 Оспаривание
-
-- [ ]  `src/components/cbt/CbtChallenge.vue` — блок оспаривания
-- [ ]  Подсказки-вопросы: «Есть ли доказательства?», «Как бы я посоветовал другу?», «Что самое худшее / лучшее / вероятное?»
-- [ ]  Поле альтернативной мысли
-- [ ]  Повторная оценка эмоций (до → после)
-
-### 3.5 Список и просмотр записей
-
-- [ ]  `src/views/CbtView.vue` — список записей с фильтрами
-- [ ]  `src/views/CbtEntryView.vue` — просмотр / редактирование одной записи
-- [ ]  `src/components/cbt/CbtEntryCard.vue` — карточка в списке
-- [ ]  Статистика: частые искажения, динамика интенсивности
-
-**Результат:** Полноценный КПТ-дневник — от записи ситуации до проработки мысли, с двумя режимами сложности.
+| View | Маршрут | Следующий приоритет |
+|------|---------|---------------------|
+| ArticleView | `/article/:id` | High -- Daily Articles |
+| TasksView | `/tasks` | Medium |
+| NotesView | `/notes` | Medium |
+| LibraryView | `/library` | Medium-Low |
+| TimeTrackerView | `/time` | Low |
+| ReportView | `/report` | Low (depends on data) |
 
 ---
 
-## Фаза 4 — Трекер задач
+## Запланировано -- Приоритет 1
 
-> Контекстный планировщик с намерениями.
+### Ежедневные статьи (Фаза 1)
 
-### 4.1 Store и API
+Центральная контент-фича. HomeView уже показывает 3 карточки-заглушки, нужна реальная реализация.
 
-- [ ]  Создать `src/stores/tasks.js` — tasks, categories
-- [ ]  Создать `src/api/tasks.js` + `src/api/mock/tasks.mock.js`
+**Что нужно:**
+- Store и API: `stores/articles.js`, `api/articles.js`, `api/mock/articles.mock.js`
+- Mock: генерация 3 статей с тонами (разогрев / глубина / рефлексия)
+- `ArticleView.vue` -- полноэкранный ридер с прогресс-баром чтения
+- Компоненты: `ArticleCard.vue`, `ArticleReader.vue`, `ThoughtOfDay.vue`
+- Кнопка "Сохранить в библиотеку"
+- Привязка карточек на HomeView к реальным данным
 
-### 4.2 UI задач
+**Зависимости:** нет (самостоятельный модуль)
 
-- [ ]  `src/views/TasksView.vue` — список по категориям (работа / личное / здоровье / развитие)
-- [ ]  `src/components/tasks/TaskItem.vue` — задача с чекбоксом
-- [ ]  `src/components/tasks/TaskList.vue` — группировка по категориям
-- [ ]  `src/components/tasks/TaskIntention.vue` — «Зачем это важно для меня»
-- [ ]  Создание, редактирование, удаление задач
-- [ ]  Ежедневный дайджест на главной: план → факт
+### AI-ассистент (Фаза 5)
 
-**Результат:** Задачи с категориями и намерениями. Никакого осуждения за невыполненное.
+Тёплые советы на основе данных пользователя. HomeView уже содержит placeholder.
 
----
+**Что нужно:**
+- Store и API: `stores/ai.js`, `api/ai.js`, `api/mock/ai.mock.js`
+- Mock: шаблоны советов по эмоциям, паттерны по дням недели
+- `AiAdviceCard.vue` -- карточка совета на главной
+- `AiPatternCard.vue` -- обнаруженная закономерность
+- Интеграция в КПТ-дневник: кнопка "Помощь AI" для подсказки искажения и оспаривания
 
-## Фаза 5 — AI-ассистент
-
-> Тёплый, умный помощник на основе всех данных.
-
-### 5.1 Store и API
-
-- [ ]  Создать `src/stores/ai.js` — todayAdvice, patterns
-- [ ]  Создать `src/api/ai.js` + `src/api/mock/ai.mock.js`
-- [ ]  Мок: шаблоны советов по эмоциям, паттерны по дням недели
-
-### 5.2 Ежедневный совет
-
-- [ ]  `src/components/ai/AiAdviceCard.vue` — карточка совета на главной
-- [ ]  Контекст: прочитанные статьи + эмоция дня + история 7 дней
-- [ ]  Формат: абзац + одно действие
-- [ ]  Кнопка «Сохранить в библиотеку»
-
-### 5.3 Паттерны
-
-- [ ]  `src/components/ai/AiPatternCard.vue` — обнаруженная закономерность
-- [ ]  Еженедельный анализ эмоций (день недели, повторяющиеся темы)
-- [ ]  Подсказки в КПТ-дневнике: предложение когнитивного искажения
-
-### 5.4 Помощь с КПТ
-
-- [ ]  AI подсказывает когнитивное искажение по описанной ситуации и мыслям
-- [ ]  AI помогает сформулировать оспаривание и альтернативную мысль
-- [ ]  Интеграция в `CbtEntryForm.vue` — кнопка «Помощь AI»
-
-**Результат:** AI даёт один совет в день, замечает паттерны, помогает с КПТ-проработкой.
+**Зависимости:** Emotion Diary (done), CBT (done), Articles (in progress)
 
 ---
 
-## Фаза 6 — Дополнительные модули
+## Запланировано -- Приоритет 2
 
-> Трекер времени, заметки, библиотека — расширение функциональности.
+### Заметки и идеи (Фаза 6.2)
 
-### 6.1 Трекер времени
+Quick capture с тегами. Простой модуль, не требует сложного дизайна.
 
-- [ ]  Создать `src/stores/timeTracker.js`, API + мок
-- [ ]  `src/views/TimeTrackerView.vue` — форма + недельный график
-- [ ]  `src/components/time/TimeLogForm.vue` — запись по категориям
-- [ ]  `src/components/time/TimeWeekChart.vue` — визуализация (ECharts)
+**Что нужно:**
+- Store и API: `stores/notes.js`, `api/notes.js`, `api/mock/notes.mock.js`
+- `NotesView.vue` -- лента заметок, инлайн-создание, фильтр по тегам
+- `NoteCard.vue`, `NoteEditor.vue`
+- Теги: идея, план, цитата, вопрос себе
 
-### 6.2 Заметки и идеи
+### Трекер задач (Фаза 4)
 
-- [ ]  Создать `src/stores/notes.js`, API + мок
-- [ ]  `src/views/NotesView.vue` — лента заметок с тегами
-- [ ]  `src/components/notes/NoteCard.vue` — карточка
-- [ ]  `src/components/notes/NoteEditor.vue` — быстрое создание
-- [ ]  Теги: идея, план, цитата, вопрос себе
-- [ ]  «Отложить на потом» — напоминание через неделю
+Контекстный планировщик с намерениями.
 
-### 6.3 Личная библиотека
+**Что нужно:**
+- Store и API: `stores/tasks.js`, `api/tasks.js`, `api/mock/tasks.mock.js`
+- `TasksView.vue` -- список по категориям
+- `TaskItem.vue`, `TaskList.vue`, `TaskIntention.vue`
+- Категории: работа / личное / здоровье / развитие
+- Дайджест на главной
 
-- [ ]  Создать `src/stores/library.js`, API + мок
-- [ ]  `src/views/LibraryView.vue` — всё сохранённое по типам
-- [ ]  `src/components/library/LibraryItem.vue` — единица контента
-- [ ]  Фильтрация: статьи / советы AI / записи дневника / заметки
+### Личная библиотека (Фаза 6.3)
 
-**Результат:** Все вспомогательные модули работают и интегрированы в навигацию.
+Агрегация сохранённого контента.
 
----
+**Что нужно:**
+- Store и API: `stores/library.js`, `api/library.js`, `api/mock/library.mock.js`
+- `LibraryView.vue` -- всё сохранённое по типам
+- Фильтрация: статьи / советы AI / записи / заметки
 
-## Фаза 7 — Онбординг и профиль
-
-> Персонализация с первого входа.
-
-### 7.1 Онбординг
-
-- [ ]  `src/views/OnboardingView.vue` — пошаговый опрос (5–7 экранов)
-- [ ]  `src/composables/useOnboarding.js` — состояние шагов
-- [ ]  Вопросы: что даётся тяжело, чего хочешь, хронотип, темы, стиль обратной связи
-- [ ]  Сохранение профиля после завершения
-- [ ]  Navigation guard: не пускать дальше без онбординга
-
-### 7.2 Профиль и настройки
-
-- [ ]  `src/views/ProfileView.vue` — редактирование профиля
-- [ ]  Настройки: тема, время уведомлений, режим КПТ (базовый/продвинутый)
-- [ ]  Редактирование ответов онбординга
-
-**Результат:** Новый пользователь проходит мягкий онбординг, профиль используется AI-ассистентом.
+**Зависимости:** Articles, AI, Notes (хотя бы частично)
 
 ---
 
-## Фаза 8 — Стрики, уведомления, отчёты
+## Запланировано -- Приоритет 3
 
-> Мотивация без давления.
+### Трекер времени (Фаза 6.1)
 
-### 8.1 Стрики
+Лёгкий инструмент для осознанности, не для продуктивности.
 
-- [ ]  `src/composables/useStreak.js` — подсчёт дней подряд
-- [ ]  `src/components/ui/StreakBadge.vue` — мягкий индикатор в хедере
-- [ ]  При возвращении после пропуска: «Рады, что вернулся»
-- [ ]  Никаких «ты сломал серию»
+**Что нужно:**
+- Store и API: `stores/timeTracker.js`, `api/timeTracker.js`, `api/mock/timeTracker.mock.js`
+- `TimeTrackerView.vue` -- форма + недельный график
+- `TimeLogForm.vue`, `TimeWeekChart.vue` (ECharts)
 
-### 8.2 Уведомления
+### Стрики (Фаза 8.1)
 
-- [ ]  `src/composables/useNotification.js` — Web Push API
-- [ ]  Одно уведомление в день, в выбранное пользователем время
-- [ ]  Тон: «Твои статьи на сегодня готовы. Хорошего утра.»
+Мягкие, без давления. "Рады, что вернулся" вместо "ты сломал серию".
 
-### 8.3 Месячный отчёт
+**Что нужно:**
+- `useStreak.js` composable
+- `StreakBadge.vue` -- мягкий индикатор в хедере
 
-- [ ]  `src/views/ReportView.vue` — сводка за месяц
-- [ ]  Графики: динамика эмоций, частые темы, выполнение задач
-- [ ]  Паттерны AI за месяц
-- [ ]  Сколько дней пользователь был активен
+### Уведомления (Фаза 8.2)
 
-**Результат:** Мягкая мотивация, одно уведомление в день, месячная рефлексия.
+Одно в день, как письмо.
 
----
+**Что нужно:**
+- `useNotification.js` -- Web Push API
+- Тон: "Твои статьи на сегодня готовы. Хорошего утра."
 
-## Фаза 9 — Полировка и PWA
+### Месячный отчёт (Фаза 8.3)
 
-> Оффлайн, производительность, качество.
+Рефлексивная сводка.
 
-### 9.1 PWA
-
-- [ ]  Настроить Workbox (service worker, кеширование)
-- [ ]  Манифест (иконки, цвета, имя)
-- [ ]  Оффлайн-режим: чтение закешированных статей, запись эмоций
-- [ ]  Синхронизация при восстановлении сети
-
-### 9.2 Адаптивность
-
-- [ ]  Тестирование на мобильных (320–428px)
-- [ ]  Тестирование на планшетах (768–1024px)
-- [ ]  Десктоп (1200px+)
-- [ ]  Плавные переходы sidebar ↔ bottom nav
-
-### 9.3 Анимации и микровзаимодействия
-
-- [ ]  Transition при переходах между страницами
-- [ ]  Анимация колеса эмоций
-- [ ]  Плавное появление карточек
-- [ ]  Сезонные акценты (опционально)
-
-### 9.4 Производительность
-
-- [ ]  Lazy-load всех view и тяжёлых компонентов (ECharts)
-- [ ]  Оптимизация бандла (code splitting)
-- [ ]  Проверка Lighthouse (целевой скор 90+)
-
-**Результат:** PWA, работающее оффлайн, адаптивное, с приятными анимациями.
+**Что нужно:**
+- `ReportView.vue` -- графики, паттерны AI, динамика эмоций
+- Зависит от накопленных данных всех модулей
 
 ---
 
-## Порядок зависимостей
+## Идеи / Долгосрочно
 
-```
-Фаза 0 (Фундамент)
-  └─→ Фаза 1 (Статьи + Главная)
-  └─→ Фаза 2 (Дневник эмоций)
-        └─→ Фаза 3 (КПТ-дневник)
-        └─→ Фаза 5 (AI-ассистент) — зависит от 1 + 2
-  └─→ Фаза 4 (Задачи) — независима от 2, 3
-  └─→ Фаза 6 (Время, Заметки, Библиотека) — независима
-  └─→ Фаза 7 (Онбординг) — после того, как понятно, какие данные нужны
-  └─→ Фаза 8 (Стрики, Уведомления, Отчёты) — после всех модулей
-  └─→ Фаза 9 (PWA, Полировка) — финальная
-```
+| Идея | Описание |
+|------|----------|
+| PWA + оффлайн | Workbox service worker, кеширование, оффлайн-запись, синхронизация |
+| Тайм-капсулы | Баннер "У тебя есть послание из прошлого" (useTimeCapsule composable) |
+| Page transitions | Анимации при переходах между страницами |
+| Сезонные акценты | Адаптация палитры под время года |
+| shadcn-vue | Интеграция UI-библиотеки (в стеке, но ещё не подключена) |
+| Бэкенд | Реальный API вместо localStorage моков |
+| Адаптивное тестирование | 320-428px (mobile), 768-1024px (tablet), 1200px+ (desktop) |
+| Lighthouse 90+ | Оптимизация бандла, code splitting, производительность |
+
+---
+
+## Архитектурные паттерны (установлены)
+
+| Паттерн | Описание |
+|---------|----------|
+| API Layer | `api/xxx.js` wraps `api/mock/xxx.mock.js` via `request()` |
+| Mock Storage | localStorage with STORAGE_KEY constant |
+| Pinia Store | Composition syntax, async actions wrapping API calls |
+| Composables | `useXxx.js` -> `export function useXxx()` returning refs/computed |
+| Theme | Singleton isDark ref, shared across instances |
+| Emotion Wheel | Two-level drill-down, data in emotions-wheel.js |
+| Glass Cards | `.glass-card` / `.glass-card-elevated` global classes in main.css |
+| Design Tokens | CSS variables in theme.css, no hardcoded colors |
+| CBT Form | Progressive disclosure: basic SMER -> advanced with distortions/challenging |
+
+---
+
+## Дизайн-аудит (завершён 2026-03-05)
+
+Исправлены:
+- Missing `-webkit-backdrop-filter` в AppHeader
+- Hardcoded `white` / `#fff` заменены на `var(--color-surface-solid)` (ProfileView, EmotionEntryForm, EmotionChart, OnboardingView)
+- EmotionsView: добавлены loading skeleton + error state
+- EmotionHistory: warm empty state с декоративным орбом
+- MoreView: glassmorphism + hover lift на ссылках, исправлен вес заголовка
+- AppBottomNav: добавлен hover state для неактивных элементов
+- EmotionHistory: исправлен dead CSS (transition без hover), добавлен hover lift
+- HomeView: article cards получили glass effect + hover shadow
+- HomeView: убрано дублирование glassmorphism в `.card`, AI-секция получила `glass-card-elevated`
+- useChartColors: добавлен `surfaceSolid` ref
+- Все stub views: consistent page-title pattern (1.75rem, 700, -0.03em)

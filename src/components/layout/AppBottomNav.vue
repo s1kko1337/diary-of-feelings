@@ -1,6 +1,6 @@
 <template>
   <nav class="bottom-nav lg:hidden">
-    <div class="bottom-nav-inner glass-card-elevated">
+    <div class="bottom-nav-inner">
       <router-link
         v-for="item in items"
         :key="item.to"
@@ -34,7 +34,8 @@ const items = [
   left: 0;
   right: 0;
   z-index: 30;
-  padding: 0 12px 12px;
+  background: var(--color-bg);
+  border-top: 1px solid var(--color-border);
 }
 
 .bottom-nav-inner {
@@ -46,6 +47,7 @@ const items = [
 }
 
 .bottom-nav-item {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -57,11 +59,27 @@ const items = [
   letter-spacing: 0.02em;
   color: var(--color-text-muted);
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition: color 0.2s ease;
+}
+
+.bottom-nav-item:hover:not(.bottom-nav-item--active) {
+  color: var(--color-text-secondary);
 }
 
 .bottom-nav-item--active {
-  color: var(--color-primary);
-  background: var(--color-primary-soft);
+  color: var(--color-accent);
+  background: transparent;
+}
+
+.bottom-nav-item--active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 2px;
+  background: var(--color-accent);
+  border-radius: 0 0 2px 2px;
 }
 </style>

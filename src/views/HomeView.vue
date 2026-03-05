@@ -2,13 +2,12 @@
   <div class="home">
     <!-- Hero -->
     <section class="hero">
-      <div class="hero-orb" />
       <p class="hero-label">{{ greeting }}</p>
       <h1 class="hero-title">Как проходит<br />твой день?</h1>
     </section>
 
     <!-- Quick emotion check-in -->
-    <section class="glass-card-elevated card">
+    <section class="card">
       <p class="card-label">Что ты чувствуешь?</p>
       <div class="emotion-grid">
         <button
@@ -28,13 +27,12 @@
     </section>
 
     <!-- Daily set -->
-    <section class="glass-card-elevated card">
+    <section class="card">
       <p class="card-label">Статьи на сегодня</p>
-      <div class="articles-grid">
-        <div v-for="(article, i) in articleStubs" :key="i" class="article-card">
-          <div class="article-card-orb" :style="{ background: article.gradient }" />
-          <span class="article-card-tag">{{ article.tag }}</span>
-          <p class="article-card-title">{{ article.title }}</p>
+      <div class="articles-list">
+        <div v-for="(article, i) in articleStubs" :key="i" class="article-item">
+          <span class="article-item-tag">{{ article.tag }}</span>
+          <p class="article-item-title">{{ article.title }}</p>
         </div>
       </div>
     </section>
@@ -106,17 +104,14 @@ const articleStubs = [
   {
     tag: 'Разогрев',
     title: 'Как замечать хорошее в обычных днях',
-    gradient: 'linear-gradient(135deg, var(--color-peach), var(--color-rose))',
   },
   {
     tag: 'Глубина',
     title: 'Почему мы избегаем тишины',
-    gradient: 'linear-gradient(135deg, var(--color-lavender), var(--color-primary))',
   },
   {
     tag: 'Рефлексия',
     title: 'Письмо себе в конце дня',
-    gradient: 'linear-gradient(135deg, var(--color-mint), var(--color-lavender))',
   },
 ]
 </script>
@@ -125,47 +120,19 @@ const articleStubs = [
 .home {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--space-section);
 }
 
 /* Hero */
 .hero {
   position: relative;
-  padding: 2rem 0 1rem;
-  text-align: center;
+  padding: var(--space-2xl) 0 var(--space-lg);
+  text-align: left;
 }
 
 @media (min-width: 1024px) {
   .hero {
-    padding: 3rem 0 2rem;
-  }
-}
-
-.hero-orb {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 1.5rem;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-lavender), var(--color-peach), var(--color-mint));
-  box-shadow:
-    0 8px 32px rgb(184 165 216 / 0.3),
-    0 0 80px rgb(184 165 216 / 0.15);
-  animation: pulse-orb 4s ease-in-out infinite;
-}
-
-@keyframes pulse-orb {
-  0%,
-  100% {
-    transform: scale(1);
-    box-shadow:
-      0 8px 32px rgb(184 165 216 / 0.3),
-      0 0 80px rgb(184 165 216 / 0.15);
-  }
-  50% {
-    transform: scale(1.06);
-    box-shadow:
-      0 12px 40px rgb(184 165 216 / 0.4),
-      0 0 100px rgb(184 165 216 / 0.2);
+    padding: var(--space-2xl) 0 var(--space-lg);
   }
 }
 
@@ -178,30 +145,34 @@ const articleStubs = [
 }
 
 .hero-title {
-  font-size: 2rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.2;
-  color: var(--color-text);
+  font-size: 2.75rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  background: linear-gradient(135deg, #0f0f0f 0%, #6366f1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 @media (min-width: 1024px) {
   .hero-title {
-    font-size: 2.5rem;
+    font-size: 2.75rem;
   }
 }
 
 /* Cards */
 .card {
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
   padding: 1.5rem;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
 }
 
 .card--accent {
-  background:
-    linear-gradient(135deg, var(--color-lavender-soft), var(--color-mint-soft)),
-    var(--color-surface);
+  background: var(--color-warm-soft);
+  border: 1px solid rgb(245 158 11 / 0.15);
+  box-shadow: none;
 }
 
 .card-label {
@@ -217,7 +188,7 @@ const articleStubs = [
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--color-primary);
+  color: var(--color-accent);
   margin-bottom: 0.75rem;
 }
 
@@ -234,7 +205,7 @@ const articleStubs = [
   margin-top: 1.25rem;
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--color-primary);
+  color: var(--color-accent);
   text-decoration: none;
   transition: gap 0.2s ease;
 }
@@ -255,77 +226,72 @@ const articleStubs = [
   align-items: center;
   gap: 6px;
   padding: 10px 18px;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--pill-accent, transparent);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--pill-accent, var(--color-border));
   background: var(--pill-bg);
   font-size: 0.82rem;
   font-weight: 500;
   color: var(--color-text);
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.1s ease;
 }
 
 .emotion-pill:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px var(--pill-accent, rgb(0 0 0 / 0.1));
+  border-color: var(--pill-accent, var(--color-accent));
+  background: var(--pill-bg);
+  box-shadow: 0 0 0 3px rgb(99 102 241 / 0.08);
+  transform: translateY(-1px);
+}
+
+.emotion-pill:active {
+  transform: translateY(0) scale(0.98);
 }
 
 .emotion-pill-emoji {
   font-size: 1rem;
 }
 
-/* Article cards — horizontal scroll or grid */
-.articles-grid {
-  display: grid;
-  gap: 10px;
+/* Article list — flat with left accent */
+.articles-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
-@media (min-width: 640px) {
-  .articles-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-.article-card {
-  position: relative;
-  overflow: hidden;
-  padding: 1.25rem;
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-hover);
-  transition: transform 0.2s ease;
+.article-item {
+  padding: 1rem 0 1rem 1rem;
+  border-left: 2px solid var(--color-accent);
+  border-bottom: 1px solid var(--color-border);
   cursor: pointer;
+  transition: background 0.15s ease;
 }
 
-.article-card:hover {
-  transform: translateY(-2px);
+.article-item:last-child {
+  border-bottom: none;
 }
 
-.article-card-orb {
-  position: absolute;
-  top: -20px;
-  right: -20px;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  opacity: 0.5;
-  filter: blur(16px);
+.article-item:hover {
+  background: var(--color-surface-hover);
 }
 
-.article-card-tag {
+.article-item-tag {
   display: inline-block;
   font-size: 0.65rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--color-text-muted);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
 }
 
-.article-card-title {
+.article-item-title {
   font-size: 0.85rem;
   font-weight: 600;
   line-height: 1.4;
   color: var(--color-text);
-  position: relative;
 }
 </style>
