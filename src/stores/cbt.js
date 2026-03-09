@@ -11,7 +11,6 @@ export const useCbtStore = defineStore('cbt', () => {
   const stats = computed(() => {
     const total = entries.value.length
 
-    // Count distortions frequency
     const distortionCounts = {}
     for (const entry of entries.value) {
       if (entry.distortion) {
@@ -19,7 +18,6 @@ export const useCbtStore = defineStore('cbt', () => {
       }
     }
 
-    // Find top distortion
     let topDistortion = null
     let topCount = 0
     for (const [key, count] of Object.entries(distortionCounts)) {
@@ -31,7 +29,6 @@ export const useCbtStore = defineStore('cbt', () => {
 
     const topDistortionInfo = topDistortion ? getDistortion(topDistortion) : null
 
-    // Count entries this week
     const now = new Date()
     const weekAgo = new Date(now.getTime() - 7 * 86400000)
     const weekCount = entries.value.filter((e) => new Date(e.createdAt) >= weekAgo).length
@@ -88,6 +85,13 @@ export const useCbtStore = defineStore('cbt', () => {
     }
   }
 
+  async function updateStatus(id, status) {
+    const updated = await cbtApi.update(id, { status })
+    const idx = entries.value.findIndex((e) => e.id === id)
+    if (idx !== -1) entries.value[idx] = { ...entries.value[idx], status }
+    return updated
+  }
+
   async function deleteEntry(id) {
     await cbtApi.remove(id)
     entries.value = entries.value.filter((e) => e.id !== id)
@@ -102,9 +106,11 @@ export const useCbtStore = defineStore('cbt', () => {
     isLoading,
     stats,
     loadEntries,
+    fetchEntries: loadEntries,
     loadEntry,
     createEntry,
     updateEntry,
+    updateStatus,
     deleteEntry,
   }
 })

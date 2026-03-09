@@ -1,24 +1,36 @@
 import { ref, watch } from 'vue'
 
-const STORAGE_KEY = 'diary-theme'
+const STORAGE_KEY = 'dof-theme'
 
-const isDark = ref(localStorage.getItem(STORAGE_KEY) === 'dark')
+const isDark = ref(false)
+let initialized = false
 
-function applyTheme() {
-  document.documentElement.classList.toggle('dark', isDark.value)
+function applyTheme(dark) {
+  document.documentElement.classList.toggle('dark', dark)
 }
 
-applyTheme()
-
-watch(isDark, () => {
-  localStorage.setItem(STORAGE_KEY, isDark.value ? 'dark' : 'light')
-  applyTheme()
-})
-
 export function useTheme() {
+  function initTheme() {
+    if (initialized) return
+    initialized = true
+
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      isDark.value = saved === 'dark'
+    } else {
+      isDark.value = window.matchMedia('(prefers-color-scheme: dark)').matches
+    }
+    applyTheme(isDark.value)
+  }
+
   function toggleTheme() {
     isDark.value = !isDark.value
   }
 
-  return { isDark, toggleTheme }
+  watch(isDark, (val) => {
+    localStorage.setItem(STORAGE_KEY, val ? 'dark' : 'light')
+    applyTheme(val)
+  })
+
+  return { isDark, toggleTheme, initTheme }
 }

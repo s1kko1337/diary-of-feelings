@@ -1,53 +1,70 @@
 # Frontend Lead -- Agent Memory
 
-## Project State (as of 2026-03-05)
+## Project State (as of 2026-03-07)
 
-### Fully Implemented
-- Core shell: App.vue, AppNavbar, AppHeader, AppBottomNav
-- Theme system: theme.css (light + dark), useTheme composable
-- Onboarding: 6-step flow (TopicSelector, OptionSelector, OnboardingProgress, OnboardingStep)
-- Emotion Diary: EmotionWheel, EmotionEntryForm, EmotionHistory (warm empty state), EmotionChart (echarts)
-- CBT Diary (SMER): CbtView (list + filters + stats), CbtEntryView (full form + advanced mode), CbtEntryCard, CbtStatCard, CbtProgressBar, CbtEmotionPicker, CbtDistortionPicker
-- API layer: client.js, emotions.js, cbt.js, user.js + corresponding mocks
-- Stores: user.js, emotions.js, cbt.js (all Pinia composition)
-- HomeView: hero + quick emotions + article stubs (static) + AI advice placeholder
-- ProfileView: full settings (theme, notifications, CBT mode, sound, data reset)
-- MoreView: glassmorphism-styled overflow nav
+### FULL RESTART -- v2.0 Architecture
+Project underwent complete vision restart. Old pill-navbar + module-list architecture replaced with:
+- **Tree graph home** (SVG, two branches: Tasks / Emotions)
+- **Two sections** with separate bottom navs
+- **API-first pipeline**: Backend (FastAPI) -> Design -> Frontend
+- **Backend added**: Python FastAPI at `/home/mike/projects/diary-of-feelings-backend/`
 
-### Stub Views (consistent page-title pattern, no functionality)
-- TasksView, TimeTrackerView, NotesView, LibraryView, ReportView, ArticleView
+### New Module Structure
+**Tasks section** (bottom nav: Zadachi / Zametki / Biblioteka):
+- Tasks: calendar grid + colored sticky notes (drag & drop)
+- Notes: iOS Notes style, AI parses content
+- Library: documents (Word, PDF), personal knowledge base
 
-### Design Audit (completed 2026-03-05)
-All known violations fixed:
-- `-webkit-backdrop-filter` added where missing (AppHeader)
-- Hardcoded `white`/`#fff` replaced with `var(--color-surface-solid)` everywhere
-- EmotionsView: loading skeleton + error state added
-- EmotionHistory: warm empty state with decorative orb
-- MoreView: glassmorphism + hover lift on links
-- AppBottomNav: hover state for non-active items
-- HomeView: article cards got glass effect, .card de-duplication, AI card got glass-card-elevated
-- useChartColors: surfaceSolid ref added
-- Stub views: consistent page-title pattern (1.75rem, 700, -0.03em)
+**Emotions section** (bottom nav: Emotsii / Pomoshchnik / Otchyot):
+- Emotions: emotion wheel + CBT kanban board (drag & drop cards)
+- Assistant: AI chat interface (not just advice cards)
+- Report: analytics for selected period
 
-### Key Patterns Confirmed
-- CSS custom property binding via `:style` is acceptable Vue pattern (NOT an inline-style violation)
+### What Carries Over from v1
+- API client (client.js, request() pattern)
+- Theme system (theme.css, useTheme.js)
+- Emotion wheel components (EmotionWheel, EmotionEntryForm, EmotionHistory, EmotionChart)
+- CBT components (will be adapted from list to kanban)
+- Pinia stores (user, emotions, cbt -- will be adapted)
+- Composables (useTheme, useChartColors, useEmotionWheel)
+- Global styles (main.css glass-card classes)
+- Onboarding flow, ProfileView
+
+### What's Deleted from v1
+- AppNavbar.vue (pill-navbar) -> replaced by tree graph
+- MoreView.vue (overflow nav) -> replaced by bottom navs
+- ArticleView, TimeTrackerView stubs -> modules removed from concept
+- Daily articles module, Time tracker module -> removed
+
+### New Tech Additions
+- GSAP (complex animations: splash, tree graph, page transitions)
+- VueDraggable / Sortable.js (sticky notes + CBT kanban)
+- shadcn-vue dropped from stack
+
+### Key Patterns Confirmed (still valid)
+- CSS custom property binding via `:style` is acceptable (NOT inline-style violation)
 - API: src/api/xxx.js wraps src/api/mock/xxx.mock.js via request()
 - Mock storage: localStorage with STORAGE_KEY constant
 - Store: Pinia composition with async actions wrapping API calls
 - Composable: useXxx.js exporting function useXxx() returning refs/computed
-- Theme: singleton isDark ref outside function
 - Emotion wheel: two-level drill-down, data in emotions-wheel.js
-- CBT form: progressive disclosure (basic SMER -> advanced with distortions/challenging)
 
-### Priority Order for Next Modules
-1. Daily Articles -- central content feature, HomeView stubs ready
-2. AI Assistant -- HomeView placeholder ready, depends on emotions + CBT data
-3. Notes -- low friction quick capture
-4. Tasks -- contextual planner with intentions
-5. Library -- aggregation, depends on other modules
-6. Time Tracker -- awareness tool
-7. Report -- depends on accumulated data
+### Backend Setup (completed 2026-03-07)
+- Location: `/home/mike/projects/diary-of-feelings-backend/`
+- FastAPI + SQLAlchemy async + Pydantic, health check at `/api/health`
+- Needs: `pip install -r requirements.txt`, alembic init
 
-### Roadmap
-See `docs/roadmap.md` for full roadmap with statuses.
-See `task-specs.md` for delegation specs archive.
+### Key Documents
+- `CLAUDE.md` -- rewritten for v2.0
+- `docs/concept.md` -- full product concept v2.0
+- `docs/roadmap-frontend.md` -- phases 0-6
+- `docs/roadmap-backend.md` -- phases 0-6 (in backend repo)
+- `docs/design/navigation-and-screens.md` -- screen design specs
+- `docs/task-specs.md` -- delegation archive
+
+### Next Priority: Frontend Phase 0 (Foundation Cleanup)
+1. Install GSAP + VueDraggable
+2. Delete obsolete views (ArticleView, TimeTrackerView, MoreView) and AppNavbar
+3. Restructure router for new route tree
+4. Make AppBottomNav context-aware (tasks vs emotions)
+5. Update App.vue layout

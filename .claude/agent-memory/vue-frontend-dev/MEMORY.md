@@ -60,6 +60,25 @@
 - No browserslist — avoid `rgb(from var(...) r g b / 0.12)`
 - Use concrete rgba values instead
 
+## Report Module (enhanced)
+- Store: `useReportStore` in `src/stores/report.js`
+- Computed: `positiveDelta` (int diff), `hasData` (bool)
+- Mock: `src/api/mock/reports.mock.js` — returns `positiveRatio`, `previousPositiveRatio`
+- API: `src/api/reports.js` uses `api.get()` (real HTTP), NOT mock `request()`
+- Components: PeriodSelector, ReportSummary, ReportChart, ReportPatterns,
+  ReportEmotionBars, ReportHeatmap, ReportInsights, ReportEmptyState
+- Emotion color map: Радость=#fbbf24, Тревога=#818cf8, Грусть=#93c5fd,
+  Злость=#f87171, Спокойствие=#6ee7b7
+
+## Recommendations Module
+- API: `src/api/recommendations.js` — `getTodayRecommendations()`, `markRead(id)`, `getPortrait()`
+- Store: `useRecommendationsStore` in `src/stores/recommendations.js`
+  - State: recommendations ref([]), portrait ref(null), loading ref(false)
+  - Actions: fetchToday(), fetchPortrait(), markRead(id) with optimistic update
+- Components: `src/components/home/RecommendationsWidget.vue`, `src/components/home/PortraitBadge.vue`
+- Integrated into HomeView.vue: PortraitBadge after stats-strip, RecommendationsWidget after tree-section
+- API uses `api.get/patch()` (real HTTP), not mock `request()`
+
 ## Formatting Notes
 - Prettier auto-formats: collapses single-line spans, adjusts multi-line attributes
 - Build warning: echarts chunk > 500kb — expected, not actionable

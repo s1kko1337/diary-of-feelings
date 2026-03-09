@@ -1,6 +1,9 @@
 # Дорожная карта разработки — Diary of Feelings
 
-> Актуальное состояние на 2026-03-05
+> УСТАРЕЛО. Проект перезапущен 2026-03-07.
+> Актуальные roadmap-ы: `docs/roadmap-frontend.md` и `diary-of-feelings-backend/docs/roadmap-backend.md`
+
+> Ниже -- архив состояния v1 (на 2026-03-05)
 
 ---
 

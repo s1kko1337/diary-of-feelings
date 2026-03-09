@@ -5,7 +5,6 @@ const STORAGE_KEY = 'diary-cbt-entries'
 function loadAll() {
   const raw = localStorage.getItem(STORAGE_KEY)
   if (!raw) {
-    // Seed initial data on first load
     saveAll(seedEntries)
     return [...seedEntries]
   }
@@ -40,6 +39,7 @@ export function create(data) {
     challenge: data.challenge || null,
     alternative: data.alternative || null,
     emotionsAfter: data.emotionsAfter || [],
+    status: data.status || 'new',
   }
   entries.unshift(entry)
   saveAll(entries)

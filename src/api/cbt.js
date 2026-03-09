@@ -1,22 +1,25 @@
-import { request } from './client'
-import * as mock from './mock/cbt'
+import { api } from './client.js'
 
 export function getAll() {
-  return request(() => mock.getAll())
+  return api.get('/cbt')
 }
 
 export function getById(id) {
-  return request(() => mock.getById(id))
+  return api.get(`/cbt/${id}`)
 }
 
 export function create(data) {
-  return request(() => mock.create(data))
+  return api.post('/cbt', data)
 }
 
 export function update(id, data) {
-  return request(() => mock.update(id, data))
+  return api.patch(`/cbt/${id}`, data)
+}
+
+export function updateStatus(id, status) {
+  return api.patch(`/cbt/${id}/status`, { status })
 }
 
 export function remove(id) {
-  return request(() => mock.remove(id))
+  return api.delete(`/cbt/${id}`)
 }

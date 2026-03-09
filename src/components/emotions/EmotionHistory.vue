@@ -1,29 +1,65 @@
 <template>
-  <div class="history">
+  <div class="history" :class="{ 'history--timeline': timeline }">
     <div v-if="entries.length === 0" class="history-empty">
       <div class="empty-mark" />
       <p class="empty-title">Пока нет записей</p>
-      <p class="empty-hint">Начни с выбора эмоции выше -- это займёт минуту</p>
+      <p class="empty-hint">
+        Начни с выбора эмоции выше -- это займёт минуту
+      </p>
     </div>
 
-    <div v-for="entry in entries" :key="entry.id" class="history-entry">
-      <div class="entry-header">
-        <span class="entry-emoji">{{ emotionEmoji(entry.emotion) }}</span>
-        <div class="entry-info">
-          <span class="entry-label">{{ emotionLabel(entry.emotion) }}</span>
-          <span class="entry-meta">
-            {{ formatDate(entry.createdAt) }}
-            <span class="entry-intensity">{{ entry.intensity }}/10</span>
+    <div
+      v-for="entry in entries"
+      :key="entry.id"
+      class="history-entry"
+      :class="{ 'history-entry--timeline': timeline }"
+      :style="timeline
+        ? { '--entry-color': entryColor(entry) }
+        : {}"
+    >
+      <div
+        v-if="timeline"
+        class="timeline-dot"
+        :style="{ background: entryColor(entry) }"
+      />
+      <div class="entry-content">
+        <div class="entry-header">
+          <span class="entry-emoji">
+            {{ emotionEmoji(entry.emotion) }}
           </span>
+          <div class="entry-info">
+            <span class="entry-label">
+              {{ emotionLabel(entry.emotion) }}
+            </span>
+            <span class="entry-meta">
+              {{ formatDate(entry.createdAt) }}
+              <span
+                class="entry-intensity"
+                :style="timeline
+                  ? {
+                    background: entryColor(entry) + '18',
+                    color: entryColor(entry),
+                  }
+                  : {}"
+              >
+                {{ entry.intensity }}/10
+              </span>
+            </span>
+          </div>
+          <button
+            class="entry-delete"
+            @click="emit('delete', entry.id)"
+          >
+            <XIcon :size="14" :stroke-width="2" />
+          </button>
         </div>
-        <button class="entry-delete" @click="emit('delete', entry.id)">
-          <XIcon :size="14" :stroke-width="2" />
-        </button>
-      </div>
-      <p v-if="entry.note" class="entry-note">{{ entry.note }}</p>
-      <div v-if="entry.isTimeCapsule" class="entry-capsule">
-        <ClockIcon :size="12" :stroke-width="1.8" />
-        Тайм-капсула
+        <p v-if="entry.note" class="entry-note">
+          {{ entry.note }}
+        </p>
+        <div v-if="entry.isTimeCapsule" class="entry-capsule">
+          <ClockIcon :size="12" :stroke-width="1.8" />
+          Тайм-капсула
+        </div>
       </div>
     </div>
   </div>
@@ -31,13 +67,38 @@
 
 <script setup>
 import { XIcon, ClockIcon } from 'lucide-vue-next'
-import { getEmotion } from '@/api/mock/data/emotions-wheel'
+import {
+  getEmotion,
+  emotionCategories,
+} from '@/api/mock/data/emotions-wheel'
 
 defineProps({
   entries: { type: Array, default: () => [] },
+  timeline: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['delete'])
+
+const CATEGORY_COLORS = {}
+for (const cat of emotionCategories) {
+  CATEGORY_COLORS[cat.key] = cat.color
+}
+
+// Fallback hex map for categories using CSS vars
+const CATEGORY_HEX = {
+  joy: '#f97316',
+  calm: '#10b981',
+  sadness: '#6366f1',
+  anxiety: '#f43f5e',
+  anger: '#ef4444',
+  fatigue: '#818cf8',
+  surprise: '#fb923c',
+}
+
+function entryColor(entry) {
+  const cat = entry.emotionCategory
+  return CATEGORY_HEX[cat] || '#6366f1'
+}
 
 function emotionEmoji(key) {
   return getEmotion(key)?.emoji ?? ''
@@ -95,6 +156,7 @@ function formatDate(iso) {
   max-width: 280px;
 }
 
+/* Default flat layout */
 .history-entry {
   padding: 12px 0;
   border-bottom: 1px solid var(--color-border);
@@ -102,6 +164,39 @@ function formatDate(iso) {
 
 .history-entry:last-child {
   border-bottom: none;
+}
+
+/* Timeline layout */
+.history--timeline {
+  gap: 0;
+  padding-left: 8px;
+}
+
+.history-entry--timeline {
+  position: relative;
+  padding: 0 0 16px 24px;
+  border-bottom: none;
+  border-left: 2px solid var(--color-border);
+}
+
+.history-entry--timeline:last-child {
+  border-left-color: transparent;
+  padding-bottom: 0;
+}
+
+.timeline-dot {
+  position: absolute;
+  left: -5px;
+  top: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  pointer-events: none;
+}
+
+.entry-content {
+  display: flex;
+  flex-direction: column;
 }
 
 .entry-header {

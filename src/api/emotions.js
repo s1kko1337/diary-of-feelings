@@ -1,26 +1,27 @@
-import { request } from './client'
-import * as mock from './mock/emotions.mock'
+import { api } from './client.js'
 
 export function create(data) {
-  return request(() => mock.create(data))
+  return api.post('/emotions', data)
 }
 
 export function getByDate(date) {
-  return request(() => mock.getByDate(date))
+  return api.get(`/emotions?date=${date}`)
 }
 
 export function getHistory(range) {
-  return request(() => mock.getHistory(range))
+  const q = range ? `?${new URLSearchParams(range)}` : ''
+  return api.get(`/emotions${q}`)
 }
 
-export function getTimeCapsules() {
-  return request(() => mock.getTimeCapsules())
+export function getStats() {
+  return api.get('/emotions/stats')
+}
+
+// alias used by store
+export function getPatterns() {
+  return api.get('/emotions/stats')
 }
 
 export function remove(id) {
-  return request(() => mock.remove(id))
-}
-
-export function getPatterns() {
-  return request(() => mock.getPatterns())
+  return api.delete(`/emotions/${id}`)
 }
