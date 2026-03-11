@@ -1,7 +1,13 @@
 import { api } from './client.js'
 
 export function create(data) {
-  return api.post('/emotions', data)
+  return api.post('/emotions', {
+    emotion_name: data.emotion,
+    emotion_category: data.emotionCategory,
+    intensity: data.intensity,
+    note: data.note,
+    is_time_capsule: data.isTimeCapsule ?? false,
+  })
 }
 
 export function getByDate(date) {

@@ -12,7 +12,10 @@
       v-for="entry in entries"
       :key="entry.id"
       class="history-entry"
-      :class="{ 'history-entry--timeline': timeline }"
+      :class="{
+        'history-entry--timeline': timeline,
+        'history-entry--capsule-open': (entry.isTimeCapsule || entry.is_time_capsule) && !isTimeCapsuleLocked(entry),
+      }"
       :style="timeline
         ? { '--entry-color': entryColor(entry) }
         : {}"
@@ -53,12 +56,21 @@
             <XIcon :size="14" :stroke-width="2" />
           </button>
         </div>
-        <p v-if="entry.note" class="entry-note">
+        <p
+          v-if="entry.note && !(entry.isTimeCapsule || entry.is_time_capsule) || ((entry.isTimeCapsule || entry.is_time_capsule) && !isTimeCapsuleLocked(entry))"
+          class="entry-note"
+        >
           {{ entry.note }}
         </p>
-        <div v-if="entry.isTimeCapsule" class="entry-capsule">
-          <ClockIcon :size="12" :stroke-width="1.8" />
-          Тайм-капсула
+        <div
+          v-if="entry.isTimeCapsule || entry.is_time_capsule"
+          class="entry-capsule"
+          :class="{ 'entry-capsule--locked': isTimeCapsuleLocked(entry), 'entry-capsule--open': !isTimeCapsuleLocked(entry) }"
+        >
+          <LockIcon v-if="isTimeCapsuleLocked(entry)" :size="11" :stroke-width="2" />
+          <UnlockIcon v-else :size="11" :stroke-width="2" />
+          <span v-if="isTimeCapsuleLocked(entry)">Откроется {{ timeCapsuleOpenDate(entry) }}</span>
+          <span v-else>Тайм-капсула открыта ✨</span>
         </div>
       </div>
     </div>
@@ -66,7 +78,7 @@
 </template>
 
 <script setup>
-import { XIcon, ClockIcon } from 'lucide-vue-next'
+import { XIcon, LockIcon, UnlockIcon } from 'lucide-vue-next'
 import {
   getEmotion,
   emotionCategories,
@@ -106,6 +118,21 @@ function emotionEmoji(key) {
 
 function emotionLabel(key) {
   return getEmotion(key)?.label ?? key
+}
+
+function isTimeCapsuleLocked(entry) {
+  if (!entry.isTimeCapsule && !entry.is_time_capsule) return false
+  const created = new Date(entry.createdAt || entry.created_at || entry.date)
+  const openDate = new Date(created)
+  openDate.setDate(openDate.getDate() + 30)
+  return new Date() < openDate
+}
+
+function timeCapsuleOpenDate(entry) {
+  const created = new Date(entry.createdAt || entry.created_at || entry.date)
+  const openDate = new Date(created)
+  openDate.setDate(openDate.getDate() + 30)
+  return openDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })
 }
 
 function formatDate(iso) {
@@ -278,5 +305,20 @@ function formatDate(iso) {
   color: var(--color-primary);
   font-size: 0.65rem;
   font-weight: 500;
+}
+
+.entry-capsule--locked {
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+}
+
+.entry-capsule--open {
+  background: rgba(251, 191, 36, 0.12);
+  color: #b45309;
+}
+
+.history-entry--capsule-open {
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.25);
+  border-radius: var(--radius-md);
 }
 </style>

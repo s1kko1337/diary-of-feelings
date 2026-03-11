@@ -1,6 +1,6 @@
 # Дизайн-спецификация: Навигация и Ключевые Экраны
 
-> Задача для дизайнера. Версия 1.0, 2026-03-07
+> Версия 2.0, 2026-03 (актуально)
 
 ---
 
@@ -82,33 +82,26 @@
 
 ## 3. Переходы между разделами
 
-### Механика свайп-анимаций
+### Механика переходов
 
-**Home -> Tasks (свайп влево или клик):**
-- Home-контент slide-out влево (translateX -100%)
-- Tasks-контент slide-in справа (translateX 100% -> 0)
-- Длительность: 0.4--0.5s, ease-out
-- Bottom nav Tasks появляется снизу (translateY 100% -> 0, 0.3s)
+**Между страницами (Vue Router):**
+- Fade transition через Vue `<Transition>`, 0.3s ease
+- `will-change: opacity` на router-view
 
-**Home -> Emotions (свайп вправо или клик):**
-- Home-контент slide-out вправо (translateX 100%)
-- Emotions-контент slide-in слева (translateX -100% -> 0)
-- Длительность: 0.4--0.5s, ease-out
-- Bottom nav Emotions появляется снизу
+**Внутри TasksView (вкладки Tasks / Notes / Library):**
+- CSS slide-left / slide-right анимация через Vue `<Transition>`
+- Переход определяется направлением: текущий tab-индекс vs новый
+- Touch swipe: порог 50px, определение направления по deltaX
+- `router.replace({ name: 'tasks', query: { tab } })` — не push (не засоряет history)
 
-**Section -> Home (кнопка домой или свайп):**
-- Обратная анимация
-- Bottom nav раздела уходит вниз
-
-**Внутри раздела (переключение вкладок):**
-- Fade transition, 0.2--0.3s
-- Без горизонтального свайпа (чтобы не конфликтовать с drag & drop)
+**EmotionsView (вкладки Дневник / КПТ):**
+- Router-links с активным классом
+- Fade transition внутри секции, 0.25s
 
 ### Технические ограничения
-- Использовать Vue `<Transition>` или GSAP
+- Не анимировать `backdrop-filter` — только `opacity` и `transform`
 - `will-change: transform` на анимируемых контейнерах
-- Отключить scroll во время перехода
-- Touch gestures: Hammer.js или нативные pointer events
+- Скролл сбрасывается при смене вкладки в TasksView
 
 ---
 
@@ -178,41 +171,45 @@
 
 ## 6. Bottom Navigation
 
-### Общие правила
+### Единая 5-табовая навигация
+
+Одна постоянная нижняя панель для всего приложения. Никаких двух отдельных nav для Tasks/Emotions.
+
+| Позиция | Item | Иконка | Маршрут |
+|---------|------|--------|---------|
+| 1 | Задачи | `calendar-check` | `/tasks` |
+| 2 | Эмоции | `heart` | `/emotions` |
+| 3 | **🏠 (elevated)** | `home` | `/` |
+| 4 | Помощник | `message-circle` | `/assistant` |
+| 5 | Отчёт | `bar-chart-3` | `/report` |
+
+### Стиль
+
 - `position: fixed; bottom: 0`
 - Glassmorphism: `backdrop-filter: blur(20px)`, semi-transparent
 - `-webkit-backdrop-filter` для Safari
-- Height: 56--64px (mobile), 48px (desktop -- если нужен)
+- Height: 56–64px (mobile)
 - Safe area padding: `padding-bottom: env(safe-area-inset-bottom)`
-- Border-top: 1px solid rgba(white, 0.1)
-- Max 3--4 items
+- Border-top: `1px solid rgba(white, 0.1)`
 
-### Tasks Bottom Nav
+### Кнопка Home (центр)
 
-| Item | Иконка | Текст |
-|------|--------|-------|
-| Задачи | `calendar-check` | Задачи |
-| Заметки | `notebook-pen` | Заметки |
-| Библиотека | `book-open` | Библиотека |
+- Elevated circle — выступает над панелью на 8–12px
+- `border-radius: 50%`, размер 52–56px
+- Background: primary gradient (indigo)
+- Shadow: `0 4px 16px rgba(99, 102, 241, 0.4)`
+- Активный стиль: scale 1.05
 
-- Active item: цвет индиго, иконка filled или bold
-- Inactive: muted цвет
+### Active state
 
-### Emotions Bottom Nav
-
-| Item | Иконка | Текст |
-|------|--------|-------|
-| Эмоции | `heart` | Эмоции |
-| Помощник | `message-circle` | Помощник |
-| Отчёт | `bar-chart-3` | Отчёт |
-
-- Active item: цвет лаванда / роза
-- Inactive: muted цвет
+- Active item: primary color + иконка чуть крупнее (scale 1.1)
+- Indicator: маленький pill под активным элементом, transition 0.2s
+- Inactive: `var(--color-text-muted)`
 
 ### Анимация
-- Появление: slide-up from bottom, 0.3s ease-out
-- Active indicator: pill shape under active item, transition 0.2s
-- Icon transition: scale 1 -> 1.1 on active, 0.2s
+
+- Active indicator transition: 0.2s ease
+- Icon scale transition: 0.2s ease
 
 ---
 

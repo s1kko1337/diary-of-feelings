@@ -104,11 +104,16 @@
           </defs>
         </svg>
 
-        <!-- Branch nodes -->
+        <!-- Branch nodes with spring tap feedback -->
         <button
           ref="leftNodeEl"
           class="branch-node branch-node--tasks"
           style="opacity: 0"
+          @mousedown="handleNodePress(leftNodeEl)"
+          @touchstart.passive="handleNodePress(leftNodeEl)"
+          @mouseup="handleNodeRelease(leftNodeEl)"
+          @touchend="handleNodeRelease(leftNodeEl)"
+          @mouseleave="handleNodeRelease(leftNodeEl)"
           @click="navigateToTasks"
         >
           <div class="branch-node-icon tasks-icon">
@@ -127,6 +132,11 @@
           ref="rightNodeEl"
           class="branch-node branch-node--emotions"
           style="opacity: 0"
+          @mousedown="handleNodePress(rightNodeEl)"
+          @touchstart.passive="handleNodePress(rightNodeEl)"
+          @mouseup="handleNodeRelease(rightNodeEl)"
+          @touchend="handleNodeRelease(rightNodeEl)"
+          @mouseleave="handleNodeRelease(rightNodeEl)"
           @click="navigateToEmotions"
         >
           <div class="branch-node-icon emotions-icon">
@@ -173,7 +183,7 @@
         <button
           v-if="fabOpen"
           class="fab-option fab-option--mid"
-          @click="fabGoToEmotions"
+          @click="openQuickEmotion"
         >
           <HeartIcon :size="16" :stroke-width="1.8" />
           <span>Эмоция</span>
@@ -188,6 +198,125 @@
         <PlusIcon :size="22" :stroke-width="2" />
       </button>
     </div>
+
+    <!-- Quick Emotion Bottom Sheet -->
+    <Transition name="sheet-backdrop">
+      <div
+        v-if="sheetOpen"
+        class="sheet-backdrop"
+        @click="closeSheet"
+      />
+    </Transition>
+
+    <Transition name="sheet-slide">
+      <div v-if="sheetOpen" class="sheet">
+        <div class="sheet-handle" />
+
+        <!-- Step 1: Category selection -->
+        <template v-if="sheetStep === 'category'">
+          <h3 class="sheet-title">Как ты сейчас?</h3>
+          <div class="sheet-pills">
+            <button
+              v-for="cat in quickCategories"
+              :key="cat.key"
+              class="sheet-pill"
+              :style="{
+                '--pill-color': cat.color,
+                '--pill-bg': cat.color + '18',
+              }"
+              @click="pickCategory(cat)"
+            >
+              <span class="sheet-pill-emoji">
+                {{ cat.emoji }}
+              </span>
+              <span class="sheet-pill-label">
+                {{ cat.label }}
+              </span>
+            </button>
+          </div>
+          <button class="sheet-cancel" @click="closeSheet">
+            Отменить
+          </button>
+        </template>
+
+        <!-- Step 2: Specific emotion -->
+        <template v-if="sheetStep === 'emotion'">
+          <h3 class="sheet-title">
+            {{ pickedCategory?.emoji }}
+            {{ pickedCategory?.label }}
+          </h3>
+          <div class="sheet-pills">
+            <button
+              v-for="emo in currentQuickEmotions"
+              :key="emo.key"
+              class="sheet-pill"
+              :class="{
+                'sheet-pill--active':
+                  pickedEmotion?.key === emo.key,
+              }"
+              :style="{
+                '--pill-color': pickedCategory?.color,
+                '--pill-bg': pickedCategory?.color + '18',
+              }"
+              @click="pickEmotion(emo)"
+            >
+              <span class="sheet-pill-emoji">
+                {{ emo.emoji }}
+              </span>
+              <span class="sheet-pill-label">
+                {{ emo.label }}
+              </span>
+            </button>
+          </div>
+          <button class="sheet-back" @click="backToCategories">
+            <XIcon :size="14" :stroke-width="1.8" />
+            Назад
+          </button>
+        </template>
+
+        <!-- Step 3: Intensity + save -->
+        <template v-if="sheetStep === 'intensity'">
+          <h3 class="sheet-title">
+            {{ pickedEmotion?.emoji }}
+            {{ pickedEmotion?.label }}
+          </h3>
+
+          <div class="sheet-intensity">
+            <label class="sheet-intensity-label">
+              Интенсивность:
+              <span class="sheet-intensity-val">
+                {{ intensity }}
+              </span>
+            </label>
+            <input
+              v-model.number="intensity"
+              type="range"
+              min="1"
+              max="10"
+              class="sheet-slider"
+            />
+            <div class="sheet-slider-marks">
+              <span>1</span>
+              <span>5</span>
+              <span>10</span>
+            </div>
+          </div>
+
+          <div class="sheet-actions">
+            <button class="sheet-cancel" @click="closeSheet">
+              Отменить
+            </button>
+            <button
+              class="sheet-save"
+              :disabled="saving"
+              @click="saveQuickEmotion"
+            >
+              {{ saving ? 'Сохраняю...' : 'Записать' }}
+            </button>
+          </div>
+        </template>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -199,6 +328,7 @@ import {
   HeartIcon,
   FlameIcon,
   PlusIcon,
+  XIcon,
 } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { useTasksStore } from '@/stores/tasks'
@@ -240,9 +370,147 @@ function fabGoToTasks() {
   router.push({ name: 'tasks' })
 }
 
-function fabGoToEmotions() {
+// -- Spring tap feedback on branch nodes --
+
+function handleNodePress(elRef) {
+  const el = elRef?.$el ?? elRef
+  if (!el) return
+  navigator.vibrate?.(8)
+  gsap.to(el, {
+    scale: 0.92,
+    duration: 0.1,
+    ease: 'power2.out',
+  })
+}
+
+function handleNodeRelease(elRef) {
+  const el = elRef?.$el ?? elRef
+  if (!el) return
+  gsap.timeline()
+    .to(el, {
+      scale: 1.05,
+      duration: 0.15,
+      ease: 'power2.out',
+    })
+    .to(el, {
+      scale: 1,
+      duration: 0.2,
+      ease: 'elastic.out(1, 0.5)',
+    })
+}
+
+// -- Quick Emotion Bottom Sheet --
+
+const quickCategories = [
+  { key: 'joy', label: 'Радость', emoji: '😊', color: '#f59e0b' },
+  { key: 'sadness', label: 'Грусть', emoji: '😔', color: '#60a5fa' },
+  { key: 'fear', label: 'Тревога', emoji: '😰', color: '#a78bfa' },
+  { key: 'anger', label: 'Злость', emoji: '😤', color: '#f87171' },
+  {
+    key: 'disgust',
+    label: 'Отвращение',
+    emoji: '🤢',
+    color: '#34d399',
+  },
+  {
+    key: 'surprise',
+    label: 'Удивление',
+    emoji: '😲',
+    color: '#fb923c',
+  },
+]
+
+const quickEmotions = {
+  joy: [
+    { key: 'happy', label: 'Счастлив', emoji: '😄' },
+    { key: 'content', label: 'Доволен', emoji: '😊' },
+    { key: 'excited', label: 'Воодушевлён', emoji: '🤩' },
+  ],
+  sadness: [
+    { key: 'sad', label: 'Грустно', emoji: '😢' },
+    { key: 'lonely', label: 'Одиноко', emoji: '😞' },
+    { key: 'hopeless', label: 'Уныние', emoji: '😔' },
+  ],
+  fear: [
+    { key: 'anxious', label: 'Тревожно', emoji: '😰' },
+    { key: 'worried', label: 'Беспокойно', emoji: '😟' },
+    { key: 'scared', label: 'Страшно', emoji: '😨' },
+  ],
+  anger: [
+    { key: 'angry', label: 'Злюсь', emoji: '😠' },
+    { key: 'frustrated', label: 'Раздражён', emoji: '😤' },
+    { key: 'annoyed', label: 'Недоволен', emoji: '🙄' },
+  ],
+  disgust: [
+    { key: 'disgusted', label: 'Отвращение', emoji: '🤢' },
+    {
+      key: 'disappointed',
+      label: 'Разочарован',
+      emoji: '😞',
+    },
+  ],
+  surprise: [
+    { key: 'surprised', label: 'Удивлён', emoji: '😲' },
+    { key: 'amazed', label: 'Поражён', emoji: '🤩' },
+  ],
+}
+
+const sheetOpen = ref(false)
+const sheetStep = ref('category')
+const pickedCategory = ref(null)
+const pickedEmotion = ref(null)
+const intensity = ref(5)
+const saving = ref(false)
+
+const currentQuickEmotions = computed(() => {
+  if (!pickedCategory.value) return []
+  return quickEmotions[pickedCategory.value.key] ?? []
+})
+
+function openQuickEmotion() {
   fabOpen.value = false
-  router.push({ name: 'emotions' })
+  sheetStep.value = 'category'
+  pickedCategory.value = null
+  pickedEmotion.value = null
+  intensity.value = 5
+  sheetOpen.value = true
+}
+
+function closeSheet() {
+  sheetOpen.value = false
+}
+
+function pickCategory(cat) {
+  pickedCategory.value = cat
+  sheetStep.value = 'emotion'
+}
+
+function pickEmotion(emo) {
+  pickedEmotion.value = emo
+  sheetStep.value = 'intensity'
+}
+
+function backToCategories() {
+  pickedCategory.value = null
+  pickedEmotion.value = null
+  sheetStep.value = 'category'
+}
+
+async function saveQuickEmotion() {
+  if (!pickedEmotion.value || !pickedCategory.value) return
+  saving.value = true
+  try {
+    await emotionsStore.createEntry({
+      emotion: pickedEmotion.value.key,
+      emotionCategory: pickedCategory.value.key,
+      intensity: intensity.value,
+    })
+    sheetOpen.value = false
+  } catch {
+    // Silently handle -- user can retry
+  } finally {
+    saving.value = false
+  }
 }
 
 // Today's date string for comparisons
@@ -282,7 +550,7 @@ const streakCount = computed(() => {
   // Count consecutive days backwards from today
   let count = 0
   const day = new Date()
-   
+
   while (true) {
     const ds = day.toISOString().slice(0, 10)
     if (!dates.has(ds)) break
@@ -577,7 +845,7 @@ onMounted(async () => {
   display: block;
 }
 
-/* Branch nodes */
+/* Branch nodes — GSAP handles transform, so no CSS transform transition */
 .branch-node {
   position: absolute;
   bottom: -8px;
@@ -595,17 +863,12 @@ onMounted(async () => {
   cursor: pointer;
   text-align: center;
   transition:
-    transform 0.25s ease,
     box-shadow 0.25s ease,
     border-color 0.25s ease;
   width: 130px;
 }
 .branch-node:hover {
-  transform: translateY(-4px);
   box-shadow: 0 8px 32px rgba(100, 80, 160, 0.18);
-}
-.branch-node:active {
-  transform: scale(0.96);
 }
 .branch-node--tasks { left: 0; }
 .branch-node--emotions { right: 0; }
@@ -754,5 +1017,240 @@ onMounted(async () => {
 .fab-option-up-leave-to {
   opacity: 0;
   transform: translateY(8px) scale(0.95);
+}
+
+/* Quick Emotion Bottom Sheet */
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 100;
+}
+
+.sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 101;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: 20px 20px 0 0;
+  padding: 0.75rem 1.25rem
+    calc(var(--bottom-nav-height, 64px) + 1rem);
+  box-shadow: 0 -8px 40px rgba(100, 80, 160, 0.15);
+}
+
+.sheet-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.12);
+  margin: 0 auto 1rem;
+}
+
+.sheet-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-text, #1a1714);
+  text-align: center;
+  margin: 0 0 1rem;
+}
+
+.sheet-pills {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.sheet-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 50px;
+  border: 1.5px solid transparent;
+  background: var(--pill-bg, rgba(0, 0, 0, 0.05));
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text, #1a1714);
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.sheet-pill:hover {
+  transform: translateY(-1px);
+  border-color: var(--pill-color, #6366f1);
+  box-shadow: 0 2px 12px rgba(100, 80, 160, 0.1);
+}
+.sheet-pill:active {
+  transform: scale(0.97);
+}
+.sheet-pill--active {
+  border-color: var(--pill-color, #6366f1);
+  box-shadow: 0 2px 12px rgba(100, 80, 160, 0.15);
+}
+
+.sheet-pill-emoji {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.sheet-pill-label {
+  line-height: 1;
+}
+
+/* Intensity slider */
+.sheet-intensity {
+  max-width: 320px;
+  margin: 0 auto 1.25rem;
+}
+
+.sheet-intensity-label {
+  display: block;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text-secondary, rgba(26, 23, 20, 0.55));
+  margin-bottom: 0.6rem;
+}
+
+.sheet-intensity-val {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #6366f1;
+}
+
+.sheet-slider {
+  width: 100%;
+  height: 6px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: rgba(99, 102, 241, 0.15);
+  border-radius: 3px;
+  outline: none;
+}
+.sheet-slider::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #6366f1;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+.sheet-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #6366f1;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.sheet-slider-marks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: var(--color-text-muted, rgba(26, 23, 20, 0.35));
+  margin-top: 0.3rem;
+  padding: 0 2px;
+}
+
+/* Sheet action buttons */
+.sheet-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.sheet-cancel {
+  padding: 0.55rem 1.2rem;
+  border-radius: 50px;
+  border: 1.5px solid rgba(0, 0, 0, 0.1);
+  background: transparent;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-secondary, rgba(26, 23, 20, 0.55));
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.sheet-cancel:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.sheet-back {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0 auto;
+  padding: 0.45rem 1rem;
+  border-radius: 50px;
+  border: none;
+  background: transparent;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text-secondary, rgba(26, 23, 20, 0.55));
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+.sheet-back:hover {
+  color: var(--color-text, #1a1714);
+}
+
+.sheet-save {
+  padding: 0.55rem 1.6rem;
+  border-radius: 50px;
+  border: none;
+  background: #6366f1;
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(99, 102, 241, 0.3);
+  transition:
+    background 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+.sheet-save:hover {
+  background: #4f46e5;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+}
+.sheet-save:active {
+  transform: scale(0.97);
+}
+.sheet-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Sheet transitions */
+.sheet-backdrop-enter-active,
+.sheet-backdrop-leave-active {
+  transition: opacity 0.3s ease;
+}
+.sheet-backdrop-enter-from,
+.sheet-backdrop-leave-to {
+  opacity: 0;
+}
+
+.sheet-slide-enter-active {
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.sheet-slide-leave-active {
+  transition: transform 0.25s ease-in;
+}
+.sheet-slide-enter-from,
+.sheet-slide-leave-to {
+  transform: translateY(100%);
 }
 </style>

@@ -55,22 +55,18 @@ const router = createRouter({
       name: 'report',
       component: () => import('@/views/ReportView.vue'),
     },
-    // CBT
+    // CBT — redirects to Emotions tab
     {
       path: '/cbt',
-      name: 'cbt',
-      component: () => import('@/views/CbtView.vue'),
+      redirect: { name: 'emotions' },
     },
     {
       path: '/cbt/new',
-      name: 'cbt-new',
-      component: () => import('@/views/CbtEntryView.vue'),
+      redirect: { name: 'emotions' },
     },
     {
       path: '/cbt/:id',
-      name: 'cbt-entry',
-      component: () => import('@/views/CbtEntryView.vue'),
-      props: true,
+      redirect: { name: 'emotions' },
     },
     // Other
     {

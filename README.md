@@ -1,44 +1,71 @@
-# diary-of-feelings
+# Diary of Feelings — Frontend
 
-This template should help get you started developing with Vue 3 in Vite.
+Vue 3 + Vite приложение. PWA, Tailwind CSS 4, Pinia, GSAP.
 
-## Recommended IDE Setup
+## Требования
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+- Node.js 20+
+- npm 10+
+- Backend запущен на `http://localhost:8000` (или через Docker)
 
-## Recommended Browser Setup
+## Установка
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
+```bash
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+## Разработка
 
-```sh
+```bash
+# Dev-сервер (proxy на localhost:8000)
 npm run dev
-```
 
-### Compile and Minify for Production
+# Сборка для продакшна
+VITE_API_URL=/api npm run build
 
-```sh
-npm run build
-```
+# Превью сборки
+npm run preview
 
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
+# Линтинг (oxlint + eslint --fix)
 npm run lint
+
+# Форматирование (Prettier)
+npm run format
 ```
+
+## Структура
+
+```
+src/
+├── api/          # API-обёртки + mock-данные
+├── assets/       # main.css (глобальные стили) + theme.css (CSS-переменные)
+├── components/   # Vue-компоненты по модулям
+├── composables/  # useTheme, useOfflineStatus, useChartColors
+├── router/       # Vue Router (lazy-load)
+├── stores/       # Pinia stores (composition syntax)
+└── views/        # Страницы (SplashView, HomeView, TasksView, EmotionsView, ...)
+```
+
+## Соглашения
+
+- `<script setup>` — всегда, никакого Options API
+- Порядок блоков: `<template>` → `<script setup>` → `<style scoped>`
+- Стили всегда `scoped`; глобальные только в `assets/main.css`
+- Pinia — только composition syntax (`defineStore('name', () => {...})`)
+- Prettier: без `;`, одинарные кавычки, 100 символов в строке
+- Коммиты и комментарии — English; UI-текст — Russian
+
+## IDE
+
+VS Code + [Vue Official](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (отключить Vetur).
+
+Devtools: [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd) для Chrome.
+
+## Документация
+
+- `docs/concept.md` — концепция продукта
+- `docs/architecture.md` — архитектура frontend + backend
+- `docs/roadmap-improvements.md` — план качественных улучшений
+- `docs/design/navigation-and-screens.md` — дизайн-спецификация экранов
+- `docs/design/cbt-diary-spec.md` — спецификация КПТ-дневника
+- `CLAUDE.md` — конвенции для AI-агентов

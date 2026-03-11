@@ -56,7 +56,7 @@ function isActive(item) {
   justify-content: center;
   background: var(--color-bg);
   border-top: 1px solid var(--color-border);
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .bottom-nav-inner {

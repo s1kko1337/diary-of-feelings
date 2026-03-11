@@ -48,24 +48,10 @@
           />
         </div>
 
-        <!-- E — Emotions + intensity before -->
+        <!-- E — Emotions -->
         <div class="cbt-field">
           <label class="cbt-field__label">Э — Эмоции</label>
-          <input
-            v-model="emotionInput"
-            class="cbt-field__input cbt-field__input--single"
-            placeholder="Тревога, Обида..."
-          />
-          <div v-if="advancedMode" class="cbt-intensity-row">
-            <span class="cbt-intensity-label">Интенсивность до: {{ form.intensityBefore }}/10</span>
-            <input
-              v-model.number="form.intensityBefore"
-              type="range"
-              min="1"
-              max="10"
-              class="cbt-slider"
-            />
-          </div>
+          <CbtEmotionPicker v-model="form.emotions" />
         </div>
 
         <!-- R — Reaction -->
@@ -182,6 +168,7 @@
 import { computed, ref, watch } from 'vue'
 import { X as XIcon } from 'lucide-vue-next'
 import { distortions } from '@/api/mock/data/distortions.js'
+import CbtEmotionPicker from '@/components/cbt/CbtEmotionPicker.vue'
 
 const STATUSES = [
   { value: 'new', label: 'Новая' },
@@ -199,24 +186,27 @@ const emit = defineEmits(['save', 'close'])
 
 const isEdit = ref(false)
 const advancedMode = ref(false)
-const emotionInput = ref('')
 const form = ref({
   situation: '',
   thoughts: '',
+  emotions: [],
   reaction: '',
   distortion: '',
   challenge: '',
   alternativeThought: '',
   reflection: '',
-  intensityBefore: 7,
   intensityAfter: 4,
   status: 'new',
 })
 
 // Progress: count filled base fields (out of 4)
 const fillPercent = computed(() => {
-  const fields = [form.value.situation, form.value.thoughts, emotionInput.value, form.value.reaction]
-  const filled = fields.filter((f) => f && f.trim()).length
+  const filled = [
+    form.value.situation?.trim(),
+    form.value.thoughts?.trim(),
+    form.value.emotions?.length > 0 ? 'x' : '',
+    form.value.reaction?.trim(),
+  ].filter(Boolean).length
   return Math.round((filled / 4) * 100)
 })
 
@@ -227,20 +217,20 @@ watch(
       form.value = {
         situation: entry.situation || '',
         thoughts: entry.thoughts || '',
+        emotions: (entry.emotions || []).map((e) => ({
+          key: e.key || e.name || String(e),
+          label: e.label || e.name || String(e),
+          intensity: e.intensity ?? 5,
+        })),
         reaction: entry.reaction || '',
         distortion: entry.distortion || '',
         challenge: entry.challenge || '',
         alternativeThought: entry.alternativeThought || '',
         reflection: entry.reflection || '',
-        intensityBefore: entry.intensityBefore ?? 7,
         intensityAfter: entry.intensityAfter ?? 4,
         status: entry.status || 'new',
       }
-      emotionInput.value = (entry.emotions || [])
-        .map((e) => `${e.name || e} ${e.intensity || 5}/10`)
-        .join(', ')
       isEdit.value = true
-      // Auto-enable advanced mode if advanced fields have data
       if (entry.distortion || entry.challenge || entry.alternativeThought) {
         advancedMode.value = true
       }
@@ -248,16 +238,15 @@ watch(
       form.value = {
         situation: '',
         thoughts: '',
+        emotions: [],
         reaction: '',
         distortion: '',
         challenge: '',
         alternativeThought: '',
         reflection: '',
-        intensityBefore: 7,
         intensityAfter: 4,
         status: props.initialStatus,
       }
-      emotionInput.value = ''
       isEdit.value = false
       advancedMode.value = false
     }
@@ -265,24 +254,16 @@ watch(
   { immediate: true },
 )
 
-function parseEmotions(str) {
-  return str
-    .split(',')
-    .map((s) => {
-      const trimmed = s.trim()
-      const match = trimmed.match(/^(.+?)\s+(\d+)\/10$/)
-      if (match) return { name: match[1].trim(), intensity: parseInt(match[2]) }
-      return { name: trimmed, intensity: 5 }
-    })
-    .filter((e) => e.name)
-}
-
 function handleSave() {
   if (!form.value.situation.trim()) return
   emit('save', {
     ...props.modelValue,
     ...form.value,
-    emotions: emotionInput.value ? parseEmotions(emotionInput.value) : [],
+    emotions: form.value.emotions.map((e) => ({
+      name: e.label,
+      key: e.key,
+      intensity: e.intensity,
+    })),
   })
   emit('close')
 }

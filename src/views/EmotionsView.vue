@@ -1,5 +1,17 @@
 <template>
-  <div class="emotions-page">
+  <div
+    ref="pullListEl"
+    class="emotions-page"
+    @touchstart.passive="onPullTouchStart"
+    @touchmove.passive="onPullTouchMove"
+    @touchend="onPullTouchEnd"
+  >
+    <!-- Saved toast -->
+    <Teleport to="body">
+      <div v-if="showSavedToast" ref="toastEl" class="saved-toast">
+        ✨ Записано!
+      </div>
+    </Teleport>
     <header class="emotions-header">
       <div class="emotions-title-row">
         <h1 class="emotions-title">Эмоции</h1>
@@ -9,10 +21,6 @@
           {{ streakLabel }}
         </span>
       </div>
-      <nav class="section-tabs">
-        <router-link to="/emotions" class="section-tab" :class="{ 'section-tab--active': $route.name === 'emotions' }">Дневник</router-link>
-        <router-link to="/cbt" class="section-tab" :class="{ 'section-tab--active': ['cbt','cbt-new','cbt-entry'].includes($route.name) }">КПТ</router-link>
-      </nav>
 
       <!-- Weekly mini-graph -->
       <div class="week-dots">
@@ -52,6 +60,15 @@
 
     <!-- DIARY TAB -->
     <template v-if="activeTab === 'diary'">
+      <!-- Pull-to-refresh indicator -->
+      <div
+        v-if="isPulling || isRefreshing"
+        class="pull-indicator"
+        :style="{ height: pullY + 'px' }"
+      >
+        <div class="pull-spinner" :class="{ 'pull-spinner--active': isRefreshing }" />
+      </div>
+
       <div v-if="loading" class="skeleton-list">
         <div v-for="i in 3" :key="i" class="skeleton-card" />
       </div>
@@ -177,7 +194,131 @@
 
     <!-- CBT TAB -->
     <template v-else>
-      <CbtBoard @open="openCbtEntry" @create="openCbtCreate" />
+      <!-- Stats row -->
+      <div
+        v-if="cbtStore.entries.length > 0"
+        class="stats-row"
+      >
+        <CbtStatCard
+          :value="cbtStore.stats.total"
+          label="записей"
+        />
+        <CbtStatCard
+          :value="cbtStore.stats.topDistortion || '—'"
+          label="топ искажение"
+        />
+        <CbtStatCard
+          :value="cbtStore.stats.weekCount"
+          label="за неделю"
+          :trend="cbtStore.stats.weekCount > 0 ? 'up' : null"
+        />
+      </div>
+
+      <!-- New entry button -->
+      <button
+        class="new-cbt-btn"
+        @click="openCbtCreate('new')"
+      >
+        <PlusIcon :size="16" :stroke-width="1.8" />
+        Новая запись
+      </button>
+
+      <!-- CBT Filters -->
+      <div
+        v-if="cbtStore.entries.length > 0"
+        class="filters-row"
+      >
+        <div class="filter-pills">
+          <button
+            v-for="f in cbtTimeFilters"
+            :key="f.key"
+            class="filter-pill"
+            :class="{
+              'filter-pill--active': cbtTimeFilter === f.key
+            }"
+            @click="setCbtTimeFilter(f.key)"
+          >
+            {{ f.label }}
+          </button>
+        </div>
+        <select
+          v-model="cbtDistortionFilter"
+          class="filter-select"
+          aria-label="Фильтр по искажению"
+        >
+          <option value="">Все искажения</option>
+          <option
+            v-for="d in distortionOptions"
+            :key="d.key"
+            :value="d.key"
+          >
+            {{ d.label }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Empty state -->
+      <div
+        v-if="!cbtStore.isLoading
+          && cbtStore.entries.length === 0"
+        class="cbt-empty-state"
+      >
+        <svg
+          width="80"
+          height="80"
+          viewBox="0 0 80 80"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          class="cbt-empty-svg"
+        >
+          <rect
+            x="1" y="1" width="38" height="38"
+            stroke="currentColor" stroke-width="1.5"
+          />
+          <rect
+            x="41" y="1" width="38" height="38"
+            stroke="currentColor" stroke-width="1.5"
+          />
+          <rect
+            x="1" y="41" width="38" height="38"
+            stroke="currentColor" stroke-width="1.5"
+          />
+          <rect
+            x="56" y="56" width="8" height="8"
+            fill="currentColor"
+          />
+        </svg>
+        <h2 class="cbt-empty-title">
+          Здесь будут твои записи СМЭР
+        </h2>
+        <p class="cbt-empty-text">
+          Первая запись — шаг к пониманию себя.
+          Занимает 2–3 минуты.
+        </p>
+      </div>
+
+      <!-- Filtered empty -->
+      <div
+        v-else-if="cbtStore.entries.length > 0
+          && cbtFilteredEntries.length === 0"
+        class="cbt-filtered-empty"
+      >
+        <p class="cbt-filtered-empty-text">
+          По этому фильтру записей не найдено
+        </p>
+        <button
+          class="cbt-filtered-empty-reset"
+          @click="resetCbtFilters"
+        >
+          Сбросить фильтры
+        </button>
+      </div>
+
+      <!-- Kanban board -->
+      <CbtBoard
+        @open="openCbtEntry"
+        @create="openCbtCreate"
+      />
     </template>
 
     <CbtCardEditor
@@ -191,11 +332,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { AlertCircleIcon, FlameIcon } from 'lucide-vue-next'
+import { ref, computed, onMounted, nextTick } from 'vue'
+import gsap from 'gsap'
+import {
+  AlertCircleIcon,
+  FlameIcon,
+  PlusIcon,
+} from 'lucide-vue-next'
 import { useEmotionsStore } from '@/stores/emotions'
 import { useCbtStore } from '@/stores/cbt'
 import { getEmotion } from '@/api/mock/data/emotions-wheel'
+import { distortions } from '@/api/mock/data/distortions'
 import EmotionWheel from '@/components/emotions/EmotionWheel.vue'
 import EmotionEntryForm
   from '@/components/emotions/EmotionEntryForm.vue'
@@ -204,6 +351,7 @@ import EmotionHistory
 import EmotionChart from '@/components/emotions/EmotionChart.vue'
 import CbtBoard from '@/components/cbt/CbtBoard.vue'
 import CbtCardEditor from '@/components/cbt/CbtCardEditor.vue'
+import CbtStatCard from '@/components/cbt/CbtStatCard.vue'
 
 const store = useEmotionsStore()
 const cbtStore = useCbtStore()
@@ -213,6 +361,67 @@ const activeTab = ref('diary')
 
 function switchTab(tab) {
   activeTab.value = tab
+}
+
+// --- Saved toast ---
+const showSavedToast = ref(false)
+const toastEl = ref(null)
+
+function triggerSavedToast() {
+  showSavedToast.value = true
+  nextTick(() => {
+    if (!toastEl.value) return
+    gsap.fromTo(
+      toastEl.value,
+      { scale: 0.8, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.25, ease: 'back.out(1.7)' },
+    )
+    setTimeout(() => {
+      gsap.to(toastEl.value, {
+        opacity: 0,
+        scale: 0.9,
+        duration: 0.2,
+        onComplete: () => { showSavedToast.value = false },
+      })
+    }, 1500)
+  })
+}
+
+// --- Pull-to-refresh ---
+const pullListEl = ref(null)
+const isPulling = ref(false)
+const isRefreshing = ref(false)
+const pullY = ref(0)
+let pullStartY = 0
+
+function onPullTouchStart(e) {
+  if (pullListEl.value?.scrollTop !== 0) return
+  pullStartY = e.touches[0].clientY
+}
+
+function onPullTouchMove(e) {
+  if (!pullStartY) return
+  const delta = e.touches[0].clientY - pullStartY
+  if (delta > 0) {
+    isPulling.value = true
+    pullY.value = Math.min(delta, 70)
+  }
+}
+
+async function onPullTouchEnd() {
+  if (pullY.value > 60 && !isRefreshing.value) {
+    isRefreshing.value = true
+    pullY.value = 40
+    await Promise.all([
+      store.loadToday(),
+      store.loadHistory(),
+      store.loadPatterns(),
+    ])
+    isRefreshing.value = false
+  }
+  isPulling.value = false
+  pullY.value = 0
+  pullStartY = 0
 }
 
 // --- Diary state ---
@@ -239,7 +448,7 @@ function dismissNudge() {
   nudgeDismissed.value = true
 }
 
-// --- Filter chips ---
+// --- Diary filter chips ---
 const filters = [
   { key: 'all', label: 'Всё' },
   { key: 'week', label: 'Эта неделя' },
@@ -369,6 +578,7 @@ function resetSelection() {
 async function handleSubmit(data) {
   await store.createEntry(data)
   resetSelection()
+  triggerSavedToast()
   await store.loadPatterns()
 }
 
@@ -381,6 +591,57 @@ async function handleDelete(id) {
 const cbtShowEditor = ref(false)
 const cbtEditingEntry = ref(null)
 const cbtCreateStatus = ref('new')
+
+const cbtTimeFilter = ref('all')
+const cbtDistortionFilter = ref('')
+
+const cbtTimeFilters = [
+  { key: 'all', label: 'Все' },
+  { key: 'week', label: 'Эта неделя' },
+  { key: 'month', label: 'Этот месяц' },
+]
+
+const distortionOptions = distortions.map((d) => ({
+  key: d.key,
+  label: d.label,
+}))
+
+const cbtFilteredEntries = computed(() => {
+  let result = cbtStore.entries
+
+  if (cbtTimeFilter.value === 'week') {
+    const weekAgo = new Date(Date.now() - 7 * 86400000)
+    result = result.filter(
+      (e) => new Date(e.createdAt) >= weekAgo
+    )
+  } else if (cbtTimeFilter.value === 'month') {
+    const now = new Date()
+    result = result.filter((e) => {
+      const d = new Date(e.createdAt)
+      return (
+        d.getMonth() === now.getMonth()
+        && d.getFullYear() === now.getFullYear()
+      )
+    })
+  }
+
+  if (cbtDistortionFilter.value) {
+    result = result.filter(
+      (e) => e.distortion === cbtDistortionFilter.value
+    )
+  }
+
+  return result
+})
+
+function setCbtTimeFilter(key) {
+  cbtTimeFilter.value = key
+}
+
+function resetCbtFilters() {
+  cbtTimeFilter.value = 'all'
+  cbtDistortionFilter.value = ''
+}
 
 function openCbtEntry(entry) {
   cbtEditingEntry.value = entry
@@ -440,34 +701,6 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-}
-
-.section-tabs {
-  display: flex;
-  gap: 0.25rem;
-}
-
-.section-tab {
-  padding: 0.3rem 0.75rem;
-  border-radius: var(--radius-full);
-  font-size: 0.78rem;
-  font-weight: 500;
-  color: var(--color-text-muted);
-  text-decoration: none;
-  background: transparent;
-  border: 1px solid transparent;
-  transition: all 0.2s ease;
-}
-
-.section-tab:hover {
-  color: var(--color-text);
-  background: var(--color-surface);
-}
-
-.section-tab--active {
-  color: var(--color-accent);
-  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
-  border-color: color-mix(in srgb, var(--color-accent) 20%, transparent);
 }
 
 .emotions-title {
@@ -544,6 +777,7 @@ onMounted(async () => {
   cursor: pointer;
   color: var(--color-text-muted);
   background: transparent;
+  font-family: inherit;
   transition:
     background 0.15s,
     color 0.15s;
@@ -591,7 +825,7 @@ onMounted(async () => {
   opacity: 0.85;
 }
 
-/* Filter chips */
+/* Diary filter chips */
 .filter-chips {
   display: flex;
   gap: 6px;
@@ -607,6 +841,7 @@ onMounted(async () => {
   font-size: 0.78rem;
   font-weight: 500;
   cursor: pointer;
+  font-family: inherit;
   transition:
     background 0.15s,
     color 0.15s,
@@ -703,5 +938,198 @@ onMounted(async () => {
   background: var(--color-rose-soft, #ffd0cc);
   color: var(--color-text);
   font-size: 0.85rem;
+}
+
+/* --- CBT tab styles --- */
+
+.stats-row {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.stats-row::-webkit-scrollbar {
+  display: none;
+}
+
+.new-cbt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.5rem 1.1rem;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.new-cbt-btn:hover {
+  background: var(--color-accent-hover);
+  box-shadow: 0 2px 8px rgb(99 102 241 / 0.25);
+}
+
+.new-cbt-btn:active {
+  transform: scale(0.97);
+}
+
+.filters-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-pills {
+  display: flex;
+  gap: 6px;
+}
+
+.filter-pill {
+  padding: 5px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.filter-pill:hover:not(.filter-pill--active) {
+  background: var(--color-surface-hover);
+}
+
+.filter-pill--active {
+  background: var(--color-accent);
+  color: white;
+  border-color: var(--color-accent);
+  box-shadow: 0 1px 4px rgb(99 102 241 / 0.3);
+}
+
+.filter-select {
+  padding: 5px 28px 5px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.78rem;
+  font-family: inherit;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237b7394' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.filter-select:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* CBT empty state */
+.cbt-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.cbt-empty-svg {
+  color: var(--color-border);
+  margin-bottom: 1.5rem;
+}
+
+.cbt-empty-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 8px;
+}
+
+.cbt-empty-text {
+  font-size: 0.88rem;
+  color: var(--color-text-secondary);
+  line-height: 1.65;
+  max-width: 320px;
+}
+
+/* CBT filtered empty */
+.cbt-filtered-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+  gap: 12px;
+}
+
+.cbt-filtered-empty-text {
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+}
+
+.cbt-filtered-empty-reset {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Saved toast */
+:global(.saved-toast) {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+  padding: 12px 24px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-solid);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Pull-to-refresh */
+.pull-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: height 0.1s ease;
+}
+
+.pull-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+}
+
+.pull-spinner--active {
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style>
