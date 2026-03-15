@@ -1,1256 +1,283 @@
 <template>
-  <div class="home">
-    <!-- Background orbs -->
-    <div class="orb orb--1" />
-    <div class="orb orb--2" />
-    <div class="orb orb--3" />
-
-    <!-- Greeting -->
-    <section ref="heroEl" class="hero" style="opacity: 0">
-      <p class="hero-time">{{ todayFormatted }}</p>
-      <h1 class="hero-greeting">{{ greeting }}</h1>
-      <p class="hero-sub">{{ motivationalPhrase }}</p>
-    </section>
-
-    <!-- Quick stats strip -->
-    <div ref="statsEl" class="stats-strip" style="opacity: 0">
-      <div class="stat-chip">
-        <FlameIcon
-          :size="15"
-          :stroke-width="1.8"
-          class="stat-icon flame"
-        />
-        <span class="stat-val">{{ streakCount }}</span>
-        <span class="stat-label">дней подряд</span>
+  <div class="space-y-6">
+    <!-- Greeting hero -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-terra-500 to-terra-600 rounded-2xl p-6 sm:p-8 text-white">
+      <div class="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/4" />
+      <div class="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/4" />
+      <div class="relative z-10">
+        <p class="text-terra-200 text-sm font-medium">{{ formattedDate }}</p>
+        <h1 class="font-display text-3xl sm:text-4xl font-bold mt-1 leading-tight">
+          {{ greeting }}<span v-if="auth.user">,<br />{{ auth.user.username }}</span>
+        </h1>
       </div>
-      <div class="stat-divider" />
-      <div v-if="lastEmotion" class="stat-chip">
-        <span class="stat-emoji">{{ lastEmotion.emoji }}</span>
-        <span class="stat-label">{{ lastEmotion.label }}</span>
-      </div>
-      <button
-        v-else
-        class="stat-chip stat-cta"
-        @click="navigateToEmotions"
-      >
-        <span class="stat-emoji">?</span>
-        <span class="stat-label stat-label--cta">Как ты?</span>
-      </button>
     </div>
 
-    <!-- Portrait badge -->
-    <PortraitBadge
-      v-if="recStore.portrait"
-      :portrait="recStore.portrait"
-    />
-
-    <!-- Tree Graph -->
-    <section
-      ref="treeEl"
-      class="tree-section"
-      style="opacity: 0"
-    >
-      <p class="tree-question">Куда идём?</p>
-
-      <div class="tree-wrap">
-        <svg
-          class="tree-svg"
-          viewBox="0 0 320 200"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <!-- Trunk -->
-          <path
-            d="M160,0 L160,80"
-            stroke="url(#trunkGrad)"
-            stroke-width="3"
-            stroke-linecap="round"
-          />
-          <!-- Left branch -->
-          <path
-            ref="leftBranchEl"
-            d="M160,80 C160,110 80,115 80,150"
-            stroke="url(#leftGrad)"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            fill="none"
-          />
-          <!-- Right branch -->
-          <path
-            ref="rightBranchEl"
-            d="M160,80 C160,110 240,115 240,150"
-            stroke="url(#rightGrad)"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            fill="none"
-          />
-          <!-- Root glow -->
-          <circle cx="160" cy="80" r="8" fill="#6366f1" opacity="0.25" />
-          <circle cx="160" cy="80" r="4" fill="#6366f1" />
-
-          <defs>
-            <linearGradient id="trunkGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#6366f1" stop-opacity="0.2" />
-              <stop offset="100%" stop-color="#6366f1" />
-            </linearGradient>
-            <linearGradient id="leftGrad" x1="1" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#6366f1" />
-              <stop offset="100%" stop-color="#a78bfa" />
-            </linearGradient>
-            <linearGradient id="rightGrad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#6366f1" />
-              <stop offset="100%" stop-color="#f0b8c0" />
-            </linearGradient>
-          </defs>
-        </svg>
-
-        <!-- Branch nodes with spring tap feedback -->
+    <!-- Quick emotion picker (compact) -->
+    <section class="bg-white rounded-2xl p-5 border border-ink-100 shadow-sm animate-fadeIn" style="animation-delay: 50ms">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-display text-lg font-semibold text-ink-900">Как вы себя чувствуете?</h2>
+        <RouterLink to="/emotions" class="text-xs text-terra-500 hover:text-terra-600 font-semibold">Подробнее</RouterLink>
+      </div>
+      <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
         <button
-          ref="leftNodeEl"
-          class="branch-node branch-node--tasks"
-          style="opacity: 0"
-          @mousedown="handleNodePress(leftNodeEl)"
-          @touchstart.passive="handleNodePress(leftNodeEl)"
-          @mouseup="handleNodeRelease(leftNodeEl)"
-          @touchend="handleNodeRelease(leftNodeEl)"
-          @mouseleave="handleNodeRelease(leftNodeEl)"
-          @click="navigateToTasks"
+          v-for="q in quickEmotions"
+          :key="q.category"
+          @click="quickLog(q)"
+          :disabled="quickLogging"
+          class="flex flex-col items-center gap-1.5 px-4 py-3 rounded-2xl transition-all hover:shadow-md active:scale-95 shrink-0 min-w-[72px] disabled:opacity-50"
+          :class="q.bg"
         >
-          <div class="branch-node-icon tasks-icon">
-            <CheckSquareIcon :size="22" :stroke-width="1.6" />
-          </div>
-          <span class="branch-node-label">
-            Задачи
-            <span v-if="todayTaskCount > 0" class="badge">
-              ({{ todayTaskCount }})
-            </span>
-          </span>
-          <span class="branch-node-sub">планы · заметки · база</span>
+          <span class="text-2xl">{{ q.emoji }}</span>
+          <span class="text-[10px] font-semibold" :class="q.text">{{ q.label }}</span>
         </button>
-
-        <button
-          ref="rightNodeEl"
-          class="branch-node branch-node--emotions"
-          style="opacity: 0"
-          @mousedown="handleNodePress(rightNodeEl)"
-          @touchstart.passive="handleNodePress(rightNodeEl)"
-          @mouseup="handleNodeRelease(rightNodeEl)"
-          @touchend="handleNodeRelease(rightNodeEl)"
-          @mouseleave="handleNodeRelease(rightNodeEl)"
-          @click="navigateToEmotions"
-        >
-          <div class="branch-node-icon emotions-icon">
-            <HeartIcon :size="22" :stroke-width="1.6" />
-          </div>
-          <span class="branch-node-label">Эмоции</span>
-          <span class="branch-node-sub">
-            <template v-if="todayEmotionEmoji">
-              {{ todayEmotionEmoji }} сегодня
-            </template>
-            <template v-else>
-              дневник · КПТ · ИИ
-            </template>
+      </div>
+      <div v-if="todayEmotions.length" class="mt-4 pt-3 border-t border-ink-100">
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <span class="text-[10px] text-ink-400 uppercase tracking-wider font-semibold mr-1">Сегодня:</span>
+          <span
+            v-for="em in todayEmotions.slice(0, 6)"
+            :key="em.id"
+            class="text-xs px-2 py-0.5 rounded-full font-medium"
+            :class="emotionChipClass(em.emotionCategory)"
+          >
+            {{ em.emotionName }}
           </span>
-        </button>
+          <span v-if="todayEmotions.length > 6" class="text-xs text-ink-400">+{{ todayEmotions.length - 6 }}</span>
+        </div>
       </div>
     </section>
 
-    <!-- Article recommendations -->
-    <RecommendationsWidget />
-
-    <!-- FAB -->
-    <div class="fab-container">
-      <Transition name="fab-backdrop">
-        <div
-          v-if="fabOpen"
-          class="fab-backdrop"
-          @click="closeFab"
-        />
-      </Transition>
-
-      <Transition name="fab-option-up">
-        <button
-          v-if="fabOpen"
-          class="fab-option fab-option--top"
-          @click="fabGoToTasks"
-        >
-          <CheckSquareIcon :size="16" :stroke-width="1.8" />
-          <span>Задача</span>
-        </button>
-      </Transition>
-
-      <Transition name="fab-option-up">
-        <button
-          v-if="fabOpen"
-          class="fab-option fab-option--mid"
-          @click="openQuickEmotion"
-        >
-          <HeartIcon :size="16" :stroke-width="1.8" />
-          <span>Эмоция</span>
-        </button>
-      </Transition>
-
-      <button
-        class="fab-button"
-        :class="{ 'fab-button--open': fabOpen }"
-        @click="toggleFab"
-      >
-        <PlusIcon :size="22" :stroke-width="2" />
-      </button>
+    <!-- Streak widget -->
+    <div v-if="streaks?.currentStreak" class="bg-white rounded-2xl p-4 border border-ink-100 shadow-sm flex items-center gap-4 animate-fadeIn" style="animation-delay: 80ms">
+      <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-coral-400 to-coral-500 flex items-center justify-center shadow-sm">
+        <Flame class="w-6 h-6 text-white" />
+      </div>
+      <div>
+        <p class="font-display text-2xl font-bold text-ink-900">{{ streaks.currentStreak }} {{ streakWord(streaks.currentStreak) }}</p>
+        <p class="text-xs text-ink-400">Серия записей подряд</p>
+      </div>
+      <div class="ml-auto text-right">
+        <p class="text-xs text-ink-400">Рекорд</p>
+        <p class="font-display font-bold text-gold-600">{{ streaks.longestStreak ?? 0 }}</p>
+      </div>
     </div>
 
-    <!-- Quick Emotion Bottom Sheet -->
-    <Transition name="sheet-backdrop">
-      <div
-        v-if="sheetOpen"
-        class="sheet-backdrop"
-        @click="closeSheet"
-      />
-    </Transition>
-
-    <Transition name="sheet-slide">
-      <div v-if="sheetOpen" class="sheet">
-        <div class="sheet-handle" />
-
-        <!-- Step 1: Category selection -->
-        <template v-if="sheetStep === 'category'">
-          <h3 class="sheet-title">Как ты сейчас?</h3>
-          <div class="sheet-pills">
-            <button
-              v-for="cat in quickCategories"
-              :key="cat.key"
-              class="sheet-pill"
-              :style="{
-                '--pill-color': cat.color,
-                '--pill-bg': cat.color + '18',
-              }"
-              @click="pickCategory(cat)"
-            >
-              <span class="sheet-pill-emoji">
-                {{ cat.emoji }}
-              </span>
-              <span class="sheet-pill-label">
-                {{ cat.label }}
-              </span>
-            </button>
+    <!-- Portrait + Tasks row -->
+    <div class="grid sm:grid-cols-2 gap-4 animate-fadeIn" style="animation-delay: 100ms">
+      <!-- Mini portrait -->
+      <RouterLink v-if="portrait" to="/portrait" class="bg-white rounded-2xl p-5 border border-ink-100 shadow-sm hover:shadow-md transition-shadow block">
+        <h2 class="font-display text-sm font-semibold text-ink-500 mb-3 uppercase tracking-wider">Ваш портрет</h2>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-ink-500">Тренд</span>
+            <span class="font-display font-bold text-lg" :class="trendColor">{{ trendLabel }}</span>
           </div>
-          <button class="sheet-cancel" @click="closeSheet">
-            Отменить
-          </button>
-        </template>
-
-        <!-- Step 2: Specific emotion -->
-        <template v-if="sheetStep === 'emotion'">
-          <h3 class="sheet-title">
-            {{ pickedCategory?.emoji }}
-            {{ pickedCategory?.label }}
-          </h3>
-          <div class="sheet-pills">
-            <button
-              v-for="emo in currentQuickEmotions"
-              :key="emo.key"
-              class="sheet-pill"
-              :class="{
-                'sheet-pill--active':
-                  pickedEmotion?.key === emo.key,
-              }"
-              :style="{
-                '--pill-color': pickedCategory?.color,
-                '--pill-bg': pickedCategory?.color + '18',
-              }"
-              @click="pickEmotion(emo)"
-            >
-              <span class="sheet-pill-emoji">
-                {{ emo.emoji }}
-              </span>
-              <span class="sheet-pill-label">
-                {{ emo.label }}
-              </span>
-            </button>
-          </div>
-          <button class="sheet-back" @click="backToCategories">
-            <XIcon :size="14" :stroke-width="1.8" />
-            Назад
-          </button>
-        </template>
-
-        <!-- Step 3: Intensity + save -->
-        <template v-if="sheetStep === 'intensity'">
-          <h3 class="sheet-title">
-            {{ pickedEmotion?.emoji }}
-            {{ pickedEmotion?.label }}
-          </h3>
-
-          <div class="sheet-intensity">
-            <label class="sheet-intensity-label">
-              Интенсивность:
-              <span class="sheet-intensity-val">
-                {{ intensity }}
-              </span>
-            </label>
-            <input
-              v-model.number="intensity"
-              type="range"
-              min="1"
-              max="10"
-              class="sheet-slider"
-            />
-            <div class="sheet-slider-marks">
-              <span>1</span>
-              <span>5</span>
-              <span>10</span>
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-ink-500">Стресс</span>
+            <div class="flex items-center gap-2">
+              <div class="w-20 h-1.5 bg-cream-200 rounded-full overflow-hidden">
+                <div
+                  class="h-full rounded-full transition-all"
+                  :class="stressBarColor"
+                  :style="{ width: `${(portrait.stressLevel || 0) * 10}%` }"
+                />
+              </div>
+              <span class="text-xs font-bold tabular-nums" :class="stressColor">{{ portrait.stressLevel?.toFixed(1) || '—' }}</span>
             </div>
           </div>
-
-          <div class="sheet-actions">
-            <button class="sheet-cancel" @click="closeSheet">
-              Отменить
-            </button>
-            <button
-              class="sheet-save"
-              :disabled="saving"
-              @click="saveQuickEmotion"
-            >
-              {{ saving ? 'Сохраняю...' : 'Записать' }}
-            </button>
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-ink-500">Продуктивность</span>
+            <span class="font-display font-bold text-lg text-forest-600">{{ productivityPercent }}%</span>
           </div>
-        </template>
+        </div>
+      </RouterLink>
+
+      <!-- Tasks summary -->
+      <div class="bg-white rounded-2xl p-5 border border-ink-100 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-display text-sm font-semibold text-ink-500 uppercase tracking-wider">Задачи</h2>
+          <RouterLink to="/tasks" class="text-xs text-terra-500 hover:text-terra-600 font-semibold">Все</RouterLink>
+        </div>
+        <div v-if="todayTasks.length" class="space-y-2">
+          <TaskCard
+            v-for="task in todayTasks.slice(0, 4)"
+            :key="task.id"
+            :task="task"
+            @update="handleTaskUpdate"
+            @remove="handleTaskRemove"
+          />
+          <p v-if="todayTasks.length > 4" class="text-xs text-ink-400 text-center pt-1">
+            ещё {{ todayTasks.length - 4 }}
+          </p>
+        </div>
+        <div v-else class="py-6 text-center">
+          <p class="text-sm text-ink-400 mb-2">Нет задач</p>
+        </div>
+        <div class="mt-3 pt-3 border-t border-ink-100">
+          <TaskInput @add="handleTaskAdd" />
+        </div>
       </div>
-    </Transition>
+    </div>
+
+    <!-- Recommendations -->
+    <section v-if="recs.length" class="animate-fadeIn" style="animation-delay: 150ms">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="font-display text-lg font-semibold text-ink-900">Рекомендации на сегодня</h2>
+        <RouterLink to="/recommendations" class="text-xs text-terra-500 hover:text-terra-600 font-semibold">Все</RouterLink>
+      </div>
+      <div class="grid sm:grid-cols-3 gap-3">
+        <ArticleCard
+          v-for="rec in recs"
+          :key="rec.id"
+          :rec="rec"
+          @read="recsStore.read"
+          @helpful="recsStore.helpful"
+        />
+      </div>
+    </section>
+
+    <!-- Leya card -->
+    <RouterLink
+      to="/assistant"
+      class="block bg-gradient-to-r from-forest-600 to-forest-700 rounded-2xl p-5 text-white transition-all hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] animate-fadeIn"
+      style="animation-delay: 200ms"
+    >
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-14 bg-white/15 rounded-full flex items-center justify-center shrink-0 backdrop-blur-sm">
+          <MessageCircle class="w-7 h-7" />
+        </div>
+        <div>
+          <h3 class="font-display text-xl font-bold">Поговорить с Леей</h3>
+          <p class="text-forest-200 text-sm mt-0.5">Ваш личный AI-ассистент всегда рядом</p>
+        </div>
+        <ChevronRight class="w-5 h-5 text-forest-300 ml-auto shrink-0" />
+      </div>
+    </RouterLink>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import {
-  CheckSquareIcon,
-  HeartIcon,
-  FlameIcon,
-  PlusIcon,
-  XIcon,
-} from 'lucide-vue-next'
+import { computed, ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import { useTasksStore } from '@/stores/tasks'
 import { useEmotionsStore } from '@/stores/emotions'
+import { useTasksStore } from '@/stores/tasks'
 import { useRecommendationsStore } from '@/stores/recommendations'
-import { getEmotion } from '@/api/mock/data/emotions-wheel'
-import RecommendationsWidget from '@/components/home/RecommendationsWidget.vue'
-import PortraitBadge from '@/components/home/PortraitBadge.vue'
-import gsap from 'gsap'
+import { getStreaks } from '@/api/insights'
+import TaskCard from '@/components/tasks/TaskCard.vue'
+import TaskInput from '@/components/tasks/TaskInput.vue'
+import ArticleCard from '@/components/recommendations/ArticleCard.vue'
+import { MessageCircle, ChevronRight, Flame } from 'lucide-vue-next'
 
-const router = useRouter()
-const authStore = useAuthStore()
-const tasksStore = useTasksStore()
+const auth = useAuthStore()
 const emotionsStore = useEmotionsStore()
-const recStore = useRecommendationsStore()
+const tasksStore = useTasksStore()
+const recsStore = useRecommendationsStore()
+const streaks = ref(null)
 
-// Template refs
-const heroEl = ref(null)
-const statsEl = ref(null)
-const treeEl = ref(null)
-const leftBranchEl = ref(null)
-const rightBranchEl = ref(null)
-const leftNodeEl = ref(null)
-const rightNodeEl = ref(null)
+const today = new Date()
+const todayStr = today.toISOString().slice(0, 10)
+const quickLogging = ref(false)
 
-// FAB state
-const fabOpen = ref(false)
-
-function toggleFab() {
-  fabOpen.value = !fabOpen.value
-}
-
-function closeFab() {
-  fabOpen.value = false
-}
-
-function fabGoToTasks() {
-  fabOpen.value = false
-  router.push({ name: 'tasks' })
-}
-
-// -- Spring tap feedback on branch nodes --
-
-function handleNodePress(elRef) {
-  const el = elRef?.$el ?? elRef
-  if (!el) return
-  navigator.vibrate?.(8)
-  gsap.to(el, {
-    scale: 0.92,
-    duration: 0.1,
-    ease: 'power2.out',
-  })
-}
-
-function handleNodeRelease(elRef) {
-  const el = elRef?.$el ?? elRef
-  if (!el) return
-  gsap.timeline()
-    .to(el, {
-      scale: 1.05,
-      duration: 0.15,
-      ease: 'power2.out',
-    })
-    .to(el, {
-      scale: 1,
-      duration: 0.2,
-      ease: 'elastic.out(1, 0.5)',
-    })
-}
-
-// -- Quick Emotion Bottom Sheet --
-
-const quickCategories = [
-  { key: 'joy', label: 'Радость', emoji: '😊', color: '#f59e0b' },
-  { key: 'sadness', label: 'Грусть', emoji: '😔', color: '#60a5fa' },
-  { key: 'fear', label: 'Тревога', emoji: '😰', color: '#a78bfa' },
-  { key: 'anger', label: 'Злость', emoji: '😤', color: '#f87171' },
-  {
-    key: 'disgust',
-    label: 'Отвращение',
-    emoji: '🤢',
-    color: '#34d399',
-  },
-  {
-    key: 'surprise',
-    label: 'Удивление',
-    emoji: '😲',
-    color: '#fb923c',
-  },
-]
-
-const quickEmotions = {
-  joy: [
-    { key: 'happy', label: 'Счастлив', emoji: '😄' },
-    { key: 'content', label: 'Доволен', emoji: '😊' },
-    { key: 'excited', label: 'Воодушевлён', emoji: '🤩' },
-  ],
-  sadness: [
-    { key: 'sad', label: 'Грустно', emoji: '😢' },
-    { key: 'lonely', label: 'Одиноко', emoji: '😞' },
-    { key: 'hopeless', label: 'Уныние', emoji: '😔' },
-  ],
-  fear: [
-    { key: 'anxious', label: 'Тревожно', emoji: '😰' },
-    { key: 'worried', label: 'Беспокойно', emoji: '😟' },
-    { key: 'scared', label: 'Страшно', emoji: '😨' },
-  ],
-  anger: [
-    { key: 'angry', label: 'Злюсь', emoji: '😠' },
-    { key: 'frustrated', label: 'Раздражён', emoji: '😤' },
-    { key: 'annoyed', label: 'Недоволен', emoji: '🙄' },
-  ],
-  disgust: [
-    { key: 'disgusted', label: 'Отвращение', emoji: '🤢' },
-    {
-      key: 'disappointed',
-      label: 'Разочарован',
-      emoji: '😞',
-    },
-  ],
-  surprise: [
-    { key: 'surprised', label: 'Удивлён', emoji: '😲' },
-    { key: 'amazed', label: 'Поражён', emoji: '🤩' },
-  ],
-}
-
-const sheetOpen = ref(false)
-const sheetStep = ref('category')
-const pickedCategory = ref(null)
-const pickedEmotion = ref(null)
-const intensity = ref(5)
-const saving = ref(false)
-
-const currentQuickEmotions = computed(() => {
-  if (!pickedCategory.value) return []
-  return quickEmotions[pickedCategory.value.key] ?? []
+onMounted(() => {
+  emotionsStore.fetchByDate(todayStr)
+  tasksStore.fetchTasks({ month: today.getMonth() + 1, year: today.getFullYear() })
+  recsStore.fetchToday()
+  recsStore.fetchPortrait()
+  getStreaks().then(s => { streaks.value = s }).catch(() => {})
 })
 
-function openQuickEmotion() {
-  fabOpen.value = false
-  sheetStep.value = 'category'
-  pickedCategory.value = null
-  pickedEmotion.value = null
-  intensity.value = 5
-  sheetOpen.value = true
-}
-
-function closeSheet() {
-  sheetOpen.value = false
-}
-
-function pickCategory(cat) {
-  pickedCategory.value = cat
-  sheetStep.value = 'emotion'
-}
-
-function pickEmotion(emo) {
-  pickedEmotion.value = emo
-  sheetStep.value = 'intensity'
-}
-
-function backToCategories() {
-  pickedCategory.value = null
-  pickedEmotion.value = null
-  sheetStep.value = 'category'
-}
-
-async function saveQuickEmotion() {
-  if (!pickedEmotion.value || !pickedCategory.value) return
-  saving.value = true
-  try {
-    await emotionsStore.createEntry({
-      emotion: pickedEmotion.value.key,
-      emotionCategory: pickedCategory.value.key,
-      intensity: intensity.value,
-    })
-    sheetOpen.value = false
-  } catch {
-    // Silently handle -- user can retry
-  } finally {
-    saving.value = false
-  }
-}
-
-// Today's date string for comparisons
-const todayStr = new Date().toISOString().slice(0, 10)
-
-// Today's task count
-const todayTaskCount = computed(() =>
-  tasksStore.tasks.filter((t) => t.date === todayStr).length,
-)
-
-// Today's emotion emoji for the branch node subtitle
-const todayEmotionEmoji = computed(() => {
-  const entry = emotionsStore.todayEntries[0]
-  if (!entry) return null
-  const info = getEmotion(entry.emotion)
-  return info?.emoji ?? null
-})
-
-// Last recorded emotion for the stats strip
-const lastEmotion = computed(() => {
-  const entry = emotionsStore.history[0]
-    ?? emotionsStore.todayEntries[0]
-  if (!entry) return null
-  const info = getEmotion(entry.emotion)
-  if (!info) return null
-  return { emoji: info.emoji, label: info.label }
-})
-
-// Streak: consecutive days with emotion entries ending today
-const streakCount = computed(() => {
-  const all = emotionsStore.history
-  if (!all.length) return 0
-
-  // Collect unique dates
-  const dates = new Set(all.map((e) => e.date))
-
-  // Count consecutive days backwards from today
-  let count = 0
-  const day = new Date()
-
-  while (true) {
-    const ds = day.toISOString().slice(0, 10)
-    if (!dates.has(ds)) break
-    count++
-    day.setDate(day.getDate() - 1)
-  }
-  return count
-})
-
-// Greeting based on time of day
 const greeting = computed(() => {
-  const hour = new Date().getHours()
-  let text = hour < 6
-    ? 'Доброй ночи'
-    : hour < 12
-      ? 'Доброе утро'
-      : hour < 18
-        ? 'Добрый день'
-        : 'Добрый вечер'
-  return authStore.userName
-    ? `${text}, ${authStore.userName}`
-    : text
+  const h = new Date().getHours()
+  if (h < 6) return 'Доброй ночи'
+  if (h < 12) return 'Доброе утро'
+  if (h < 18) return 'Добрый день'
+  return 'Добрый вечер'
 })
 
-const todayFormatted = computed(() =>
-  new Date().toLocaleDateString('ru-RU', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  }),
+const formattedDate = computed(() =>
+  today.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })
 )
 
-const phrases = [
-  'Каждый день -- это шанс быть добрее к себе',
-  'Ты заслуживаешь внимания к своим чувствам',
-  'Маленькие шаги тоже считаются',
-  'Забота о себе -- не эгоизм, а необходимость',
-  'Сегодня хороший день, чтобы начать',
-  'Ты не обязан быть идеальным, достаточно быть собой',
-  'Иногда лучшее, что можно сделать -- просто быть',
-  'Разреши себе отдохнуть без чувства вины',
-  'Твои чувства важны, даже когда они сложные',
-  'Один маленький шаг сегодня -- большой путь завтра',
-  'Ты уже делаешь больше, чем думаешь',
-  'Нормально не знать все ответы прямо сейчас',
-  'Тишина -- тоже ответ. Прислушайся к себе',
-  'Дай себе столько времени, сколько нужно',
-  'Каждое утро -- чистая страница',
-  'Быть уязвимым -- это тоже сила',
-  'Ты достоин того хорошего, что с тобой происходит',
-  'Не сравнивай свою жизнь с чужими историями',
-  'Прогресс -- не прямая линия, и это нормально',
-  'Позволь сегодняшнему дню быть достаточным',
-  'Твоё спокойствие важнее чужих ожиданий',
-  'Ошибки -- это часть пути, а не конец дороги',
-  'Сделай глубокий вдох. Ты справляешься',
-  'Даже облачный день не отменяет солнца',
-  'Бережное отношение к себе -- основа всего',
-  'Ты растёшь, даже когда кажется, что стоишь на месте',
-  'Благодарность за мелочи меняет всё',
-  'Не торопись. Хорошее приходит в своё время',
-  'Сегодня ты -- ближе к себе, чем вчера',
-  'Каждый момент осознанности -- это победа',
-  'Нежность к себе -- не слабость, а мудрость',
-  'Ты заслуживаешь паузу в бесконечной гонке',
+const todayEmotions = computed(() => emotionsStore.entries)
+const portrait = computed(() => recsStore.portrait)
+const recs = computed(() => recsStore.recommendations)
+const todayTasks = computed(() =>
+  tasksStore.tasks.filter(t => t.date === todayStr || !t.date).sort((a, b) => a.completed - b.completed)
+)
+
+const quickEmotions = [
+  { category: 'joy', label: 'Радость', emoji: '\u2728', bg: 'bg-gradient-to-b from-gold-200 to-gold-300/60', text: 'text-gold-600' },
+  { category: 'sadness', label: 'Грусть', emoji: '\uD83D\uDCA7', bg: 'bg-gradient-to-b from-sky-300/50 to-sky-400/30', text: 'text-sky-600' },
+  { category: 'anxiety', label: 'Тревога', emoji: '\uD83C\uDF00', bg: 'bg-gradient-to-b from-coral-300/50 to-coral-400/30', text: 'text-coral-600' },
+  { category: 'anger', label: 'Злость', emoji: '\uD83D\uDD25', bg: 'bg-gradient-to-b from-rose-300/50 to-rose-400/30', text: 'text-rose-600' },
+  { category: 'fear', label: 'Страх', emoji: '\uD83D\uDCA8', bg: 'bg-gradient-to-b from-violet-300/50 to-violet-400/30', text: 'text-violet-600' },
 ]
-const motivationalPhrase = computed(
-  () => phrases[new Date().getDate() % phrases.length],
+
+const emotionChipClasses = {
+  joy: 'bg-gold-200/60 text-gold-600',
+  sadness: 'bg-sky-300/40 text-sky-600',
+  anger: 'bg-rose-300/40 text-rose-600',
+  anxiety: 'bg-coral-300/40 text-coral-600',
+  fear: 'bg-violet-300/40 text-violet-600',
+  disgust: 'bg-forest-200/50 text-forest-700',
+}
+function emotionChipClass(cat) {
+  return emotionChipClasses[cat] || 'bg-cream-200 text-ink-600'
+}
+
+const trendLabel = computed(() => {
+  const t = portrait.value?.moodTrend
+  if (t === 'improving') return '\u2197 Улучшается'
+  if (t === 'declining') return '\u2198 Ухудшается'
+  return '\u2192 Стабильно'
+})
+const trendColor = computed(() => {
+  const t = portrait.value?.moodTrend
+  if (t === 'improving') return 'text-forest-500'
+  if (t === 'declining') return 'text-coral-500'
+  return 'text-gold-500'
+})
+const stressColor = computed(() => {
+  const s = portrait.value?.stressLevel || 0
+  if (s <= 3) return 'text-forest-500'
+  if (s <= 6) return 'text-gold-500'
+  return 'text-coral-500'
+})
+const stressBarColor = computed(() => {
+  const s = portrait.value?.stressLevel || 0
+  if (s <= 3) return 'bg-forest-500'
+  if (s <= 6) return 'bg-gold-500'
+  return 'bg-coral-500'
+})
+const productivityPercent = computed(() =>
+  portrait.value?.productivityRate != null ? Math.round(portrait.value.productivityRate * 100) : '—'
 )
 
-// Navigation
-function navigateToTasks() {
-  router.push({ name: 'tasks' })
+function streakWord(n) {
+  const r = n % 10
+  const t = n % 100
+  if (t >= 11 && t <= 19) return 'дней'
+  if (r === 1) return 'день'
+  if (r >= 2 && r <= 4) return 'дня'
+  return 'дней'
 }
 
-function navigateToEmotions() {
-  router.push({ name: 'emotions' })
+async function quickLog(q) {
+  quickLogging.value = true
+  try {
+    await emotionsStore.addEmotion({ emotionCategory: q.category, emotion: q.label, intensity: 5 })
+  } finally {
+    quickLogging.value = false
+  }
 }
-
-// Load data and run animations on mount
-onMounted(async () => {
-  // Load store data (non-blocking for animations)
-  Promise.all([
-    tasksStore.fetchTasks(),
-    emotionsStore.loadToday(),
-    emotionsStore.loadHistory(),
-    recStore.fetchToday(),
-    recStore.fetchPortrait(),
-  ]).catch(() => {
-    // Silently handle -- home page degrades gracefully
-  })
-
-  // GSAP entrance animation
-  const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
-
-  tl.to(heroEl.value, { opacity: 1, y: 0, duration: 0.6 }, 0)
-  tl.to(
-    statsEl.value,
-    { opacity: 1, y: 0, duration: 0.5 },
-    0.25,
-  )
-  tl.to(treeEl.value, { opacity: 1, duration: 0.4 }, 0.4)
-
-  // Draw branches
-  const ll = leftBranchEl.value.getTotalLength()
-  const rl = rightBranchEl.value.getTotalLength()
-  gsap.set(
-    [leftBranchEl.value, rightBranchEl.value],
-    (i) => ({
-      strokeDasharray: i === 0 ? ll : rl,
-      strokeDashoffset: i === 0 ? ll : rl,
-    }),
-  )
-  tl.to(
-    leftBranchEl.value,
-    { strokeDashoffset: 0, duration: 0.7, ease: 'power2.inOut' },
-    0.5,
-  )
-  tl.to(
-    rightBranchEl.value,
-    { strokeDashoffset: 0, duration: 0.7, ease: 'power2.inOut' },
-    0.6,
-  )
-
-  tl.to(
-    leftNodeEl.value,
-    { opacity: 1, scale: 1, y: 0, duration: 0.4 },
-    1.1,
-  )
-  tl.to(
-    rightNodeEl.value,
-    { opacity: 1, scale: 1, y: 0, duration: 0.4 },
-    1.2,
-  )
-})
+async function handleTaskAdd(data) { await tasksStore.addTask({ ...data, date: todayStr }) }
+async function handleTaskUpdate(id, data) { await tasksStore.updateTask(id, data) }
+async function handleTaskRemove(id) { await tasksStore.removeTask(id) }
 </script>
 
 <style scoped>
-.home {
-  min-height: calc(100dvh - var(--bottom-nav-height, 64px));
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2rem;
-  padding: 2.5rem 1rem 2rem;
-  position: relative;
-  overflow: hidden;
-}
-
-/* Background orbs */
-.orb {
-  position: fixed;
-  border-radius: 50%;
-  filter: blur(70px);
-  opacity: 0.28;
-  pointer-events: none;
-  z-index: 0;
-}
-.orb--1 {
-  width: 350px;
-  height: 350px;
-  background: #c4b5e0;
-  top: -80px;
-  right: -80px;
-  animation: drift 24s ease-in-out infinite alternate;
-}
-.orb--2 {
-  width: 250px;
-  height: 250px;
-  background: #a8dfc8;
-  bottom: 80px;
-  left: -60px;
-  animation: drift 20s ease-in-out infinite alternate-reverse;
-}
-.orb--3 {
-  width: 180px;
-  height: 180px;
-  background: #f8c9a0;
-  top: 40%;
-  right: 10%;
-  animation: drift 28s ease-in-out infinite alternate;
-}
-@keyframes drift {
-  from { transform: translate(0, 0) scale(1); }
-  to { transform: translate(24px, 18px) scale(1.06); }
-}
-
-/* Hero */
-.hero {
-  text-align: center;
-  position: relative;
-  z-index: 1;
-}
-.hero-time {
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: #6366f1;
-  margin: 0 0 0.5rem;
-}
-.hero-greeting {
-  font-size: clamp(2rem, 7vw, 2.8rem);
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  line-height: 1.1;
-  color: var(--color-text, #1a1714);
-  margin: 0 0 0.6rem;
-}
-.hero-sub {
-  font-size: 0.9rem;
-  color: var(--color-text-secondary, rgba(26, 23, 20, 0.55));
-  font-style: italic;
-  line-height: 1.5;
-  margin: 0;
-  max-width: 280px;
-}
-
-/* Stats strip */
-.stats-strip {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.7rem 1.4rem;
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 50px;
-  box-shadow: 0 2px 16px rgba(100, 80, 160, 0.08);
-  position: relative;
-  z-index: 1;
-}
-.stat-chip {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-.stat-cta {
-  cursor: pointer;
-  border: none;
-  background: none;
-  padding: 0;
-  transition: opacity 0.2s ease;
-}
-.stat-cta:hover {
-  opacity: 0.7;
-}
-.stat-label--cta {
-  color: #6366f1;
-  font-weight: 600;
-}
-.stat-icon { color: #f59e0b; }
-.stat-emoji { font-size: 1rem; }
-.stat-val {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--color-text, #1a1714);
-}
-.stat-label {
-  font-size: 0.78rem;
-  color: var(--color-text-secondary, rgba(26, 23, 20, 0.55));
-}
-.stat-divider {
-  width: 1px;
-  height: 20px;
-  background: rgba(0, 0, 0, 0.1);
-}
-
-/* Tree section */
-.tree-section {
-  width: 100%;
-  max-width: 360px;
-  position: relative;
-  z-index: 1;
-}
-.tree-question {
-  text-align: center;
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--color-text-muted, rgba(26, 23, 20, 0.35));
-  margin: 0 0 0.5rem;
-}
-.tree-wrap {
-  position: relative;
-}
-.tree-svg {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-/* Branch nodes — GSAP handles transform, so no CSS transform transition */
-.branch-node {
-  position: absolute;
-  bottom: -8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 1rem 1.2rem;
-  border-radius: 18px;
-  border: 1.5px solid rgba(255, 255, 255, 0.6);
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 4px 24px rgba(100, 80, 160, 0.1);
-  cursor: pointer;
-  text-align: center;
-  transition:
-    box-shadow 0.25s ease,
-    border-color 0.25s ease;
-  width: 130px;
-}
-.branch-node:hover {
-  box-shadow: 0 8px 32px rgba(100, 80, 160, 0.18);
-}
-.branch-node--tasks { left: 0; }
-.branch-node--emotions { right: 0; }
-
-.branch-node-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.tasks-icon {
-  background: rgba(99, 102, 241, 0.12);
-  color: #6366f1;
-}
-.emotions-icon {
-  background: rgba(240, 184, 192, 0.3);
-  color: #e05c7a;
-}
-
-.branch-node-label {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--color-text, #1a1714);
-  letter-spacing: -0.02em;
-}
-.badge {
-  font-weight: 600;
-  font-size: 0.78rem;
-  color: #6366f1;
-}
-.branch-node-sub {
-  font-size: 0.68rem;
-  color: var(--color-text-muted, rgba(26, 23, 20, 0.4));
-  white-space: nowrap;
-}
-
-/* FAB */
-.fab-container {
-  position: fixed;
-  bottom: calc(64px + 1rem);
-  right: 1rem;
-  z-index: 50;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.fab-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.15);
-  z-index: 49;
-}
-
-.fab-button {
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  border: none;
-  background: #6366f1;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35);
-  transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease,
-    background 0.25s ease;
-  z-index: 51;
-  position: relative;
-}
-.fab-button:hover {
-  box-shadow: 0 6px 28px rgba(99, 102, 241, 0.45);
-  transform: scale(1.05);
-}
-.fab-button--open {
-  transform: rotate(45deg);
-  background: #4f46e5;
-}
-.fab-button--open:hover {
-  transform: rotate(45deg) scale(1.05);
-}
-
-.fab-option {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.55rem 1rem;
-  border-radius: 50px;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 4px 16px rgba(100, 80, 160, 0.12);
-  cursor: pointer;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--color-text, #1a1714);
-  white-space: nowrap;
-  z-index: 51;
-  position: relative;
-  transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
-}
-.fab-option:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(100, 80, 160, 0.18);
-}
-.fab-option--top {
-  /* Positioned via flex order, no extra offset needed */
-}
-.fab-option--mid {
-  /* Positioned via flex order */
-}
-
-/* FAB transitions */
-.fab-backdrop-enter-active,
-.fab-backdrop-leave-active {
-  transition: opacity 0.2s ease;
-}
-.fab-backdrop-enter-from,
-.fab-backdrop-leave-to {
-  opacity: 0;
-}
-
-.fab-option-up-enter-active {
-  transition:
-    opacity 0.2s ease,
-    transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.fab-option-up-leave-active {
-  transition:
-    opacity 0.15s ease,
-    transform 0.15s ease;
-}
-.fab-option-up-enter-from {
-  opacity: 0;
-  transform: translateY(12px) scale(0.9);
-}
-.fab-option-up-leave-to {
-  opacity: 0;
-  transform: translateY(8px) scale(0.95);
-}
-
-/* Quick Emotion Bottom Sheet */
-.sheet-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  z-index: 100;
-}
-
-.sheet {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 101;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-radius: 20px 20px 0 0;
-  padding: 0.75rem 1.25rem
-    calc(var(--bottom-nav-height, 64px) + 1rem);
-  box-shadow: 0 -8px 40px rgba(100, 80, 160, 0.15);
-}
-
-.sheet-handle {
-  width: 36px;
-  height: 4px;
-  border-radius: 2px;
-  background: rgba(0, 0, 0, 0.12);
-  margin: 0 auto 1rem;
-}
-
-.sheet-title {
-  font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--color-text, #1a1714);
-  text-align: center;
-  margin: 0 0 1rem;
-}
-
-.sheet-pills {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.sheet-pill {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.55rem 0.9rem;
-  border-radius: 50px;
-  border: 1.5px solid transparent;
-  background: var(--pill-bg, rgba(0, 0, 0, 0.05));
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-text, #1a1714);
-  transition:
-    transform 0.15s ease,
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
-}
-.sheet-pill:hover {
-  transform: translateY(-1px);
-  border-color: var(--pill-color, #6366f1);
-  box-shadow: 0 2px 12px rgba(100, 80, 160, 0.1);
-}
-.sheet-pill:active {
-  transform: scale(0.97);
-}
-.sheet-pill--active {
-  border-color: var(--pill-color, #6366f1);
-  box-shadow: 0 2px 12px rgba(100, 80, 160, 0.15);
-}
-
-.sheet-pill-emoji {
-  font-size: 1.1rem;
-  line-height: 1;
-}
-
-.sheet-pill-label {
-  line-height: 1;
-}
-
-/* Intensity slider */
-.sheet-intensity {
-  max-width: 320px;
-  margin: 0 auto 1.25rem;
-}
-
-.sheet-intensity-label {
-  display: block;
-  text-align: center;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--color-text-secondary, rgba(26, 23, 20, 0.55));
-  margin-bottom: 0.6rem;
-}
-
-.sheet-intensity-val {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #6366f1;
-}
-
-.sheet-slider {
-  width: 100%;
-  height: 6px;
-  appearance: none;
-  -webkit-appearance: none;
-  background: rgba(99, 102, 241, 0.15);
-  border-radius: 3px;
-  outline: none;
-}
-.sheet-slider::-webkit-slider-thumb {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #6366f1;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
-}
-.sheet-slider::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #6366f1;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
-}
-
-.sheet-slider-marks {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.7rem;
-  color: var(--color-text-muted, rgba(26, 23, 20, 0.35));
-  margin-top: 0.3rem;
-  padding: 0 2px;
-}
-
-/* Sheet action buttons */
-.sheet-actions {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: center;
-}
-
-.sheet-cancel {
-  padding: 0.55rem 1.2rem;
-  border-radius: 50px;
-  border: 1.5px solid rgba(0, 0, 0, 0.1);
-  background: transparent;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-text-secondary, rgba(26, 23, 20, 0.55));
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-.sheet-cancel:hover {
-  background: rgba(0, 0, 0, 0.04);
-}
-
-.sheet-back {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  margin: 0 auto;
-  padding: 0.45rem 1rem;
-  border-radius: 50px;
-  border: none;
-  background: transparent;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--color-text-secondary, rgba(26, 23, 20, 0.55));
-  cursor: pointer;
-  transition: color 0.15s ease;
-}
-.sheet-back:hover {
-  color: var(--color-text, #1a1714);
-}
-
-.sheet-save {
-  padding: 0.55rem 1.6rem;
-  border-radius: 50px;
-  border: none;
-  background: #6366f1;
-  color: white;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 2px 12px rgba(99, 102, 241, 0.3);
-  transition:
-    background 0.15s ease,
-    box-shadow 0.15s ease,
-    transform 0.15s ease;
-}
-.sheet-save:hover {
-  background: #4f46e5;
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
-}
-.sheet-save:active {
-  transform: scale(0.97);
-}
-.sheet-save:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Sheet transitions */
-.sheet-backdrop-enter-active,
-.sheet-backdrop-leave-active {
-  transition: opacity 0.3s ease;
-}
-.sheet-backdrop-enter-from,
-.sheet-backdrop-leave-to {
-  opacity: 0;
-}
-
-.sheet-slide-enter-active {
-  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-}
-.sheet-slide-leave-active {
-  transition: transform 0.25s ease-in;
-}
-.sheet-slide-enter-from,
-.sheet-slide-leave-to {
-  transform: translateY(100%);
-}
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.animate-fadeIn { animation: fadeIn 0.4s ease both; }
 </style>

@@ -1,138 +1,122 @@
 @import 'tailwindcss';
-@import './theme.css';
 
-/* Global base */
+@theme {
+  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-body: 'Nunito Sans', system-ui, -apple-system, sans-serif;
+
+  --color-cream-50: #FDFCFA;
+  --color-cream-100: #FAF8F4;
+  --color-cream-200: #F3EFE8;
+  --color-cream-300: #E8E4DD;
+
+  --color-ink-950: #0C0A09;
+  --color-ink-900: #1C1917;
+  --color-ink-800: #292524;
+  --color-ink-700: #44403C;
+  --color-ink-600: #57534E;
+  --color-ink-500: #78716C;
+  --color-ink-400: #A8A29E;
+  --color-ink-300: #D6D3D1;
+  --color-ink-200: #E7E5E4;
+  --color-ink-100: #F5F5F4;
+
+  --color-terra-700: #7A3E20;
+  --color-terra-600: #9A4D2E;
+  --color-terra-500: #B85C38;
+  --color-terra-400: #D4764F;
+  --color-terra-300: #E8A87C;
+  --color-terra-200: #F3CDAF;
+  --color-terra-100: #FBE8D8;
+  --color-terra-50: #FEF5EC;
+
+  --color-forest-700: #1B4332;
+  --color-forest-600: #2D6A4F;
+  --color-forest-500: #40916C;
+  --color-forest-400: #52B788;
+  --color-forest-300: #95D5B2;
+  --color-forest-200: #D8F3DC;
+
+  --color-gold-600: #B8942E;
+  --color-gold-500: #D4A853;
+  --color-gold-400: #E3C06A;
+  --color-gold-300: #F0D98C;
+  --color-gold-200: #FBF0C9;
+
+  --color-coral-600: #C4604A;
+  --color-coral-500: #E07A5F;
+  --color-coral-400: #E8967F;
+  --color-coral-300: #F0B5A0;
+
+  --color-rose-600: #9B2C2C;
+  --color-rose-500: #BC4749;
+  --color-rose-400: #D16B6D;
+  --color-rose-300: #E8A0A2;
+
+  --color-sky-600: #5A84A8;
+  --color-sky-500: #7AA2C4;
+  --color-sky-400: #9BBDD9;
+  --color-sky-300: #BDD6EA;
+
+  --color-violet-600: #5E4585;
+  --color-violet-500: #7B5EA7;
+  --color-violet-400: #9A80C0;
+  --color-violet-300: #B9A6D5;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  font-family: var(--font-main);
-  background: var(--color-bg);
-  color: var(--color-text);
-  min-height: 100dvh;
-  transition:
-    background 0.5s ease,
-    color 0.3s ease;
+  font-family: var(--font-body);
+  background-color: var(--color-cream-100);
+  color: var(--color-ink-900);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
 }
 
-/* Flat card (replaces glass-card) */
-.glass-card,
-.flat-card {
-  background: var(--color-surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background-color: var(--color-ink-300); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background-color: var(--color-ink-400); }
+
+::selection {
+  background-color: var(--color-terra-200);
+  color: var(--color-ink-900);
 }
 
-.glass-card-elevated,
-.flat-card-elevated {
-  background: var(--color-surface);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-float);
+/* Page transitions */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.page-leave-to {
+  opacity: 0;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 4px;
-}
+/* Fade */
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+/* Slide up */
+.slide-up-enter-active, .slide-up-leave-active {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
 }
+.slide-up-enter-from { transform: translateY(100%); opacity: 0; }
+.slide-up-leave-to { transform: translateY(100%); opacity: 0; }
 
-::-webkit-scrollbar-thumb {
-  background: var(--color-text-muted);
-  border-radius: 0;
-}
+/* Modal overlay */
+.modal-enter-active, .modal-leave-active { transition: opacity 0.2s ease; }
+.modal-enter-from, .modal-leave-to { opacity: 0; }
 
-/* Metric values */
-.metric-value {
-  font-family: var(--font-mono);
-}
-
-/* Flat utilities */
-.divider {
-  height: 1px;
-  background: var(--color-border);
-  border: none;
-  margin: 0;
-}
-
-.left-accent {
-  border-left: 2px solid var(--color-accent);
-  padding-left: 1rem;
-}
-
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 18px;
-  background: var(--color-accent);
-  color: #ffffff;
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background 0.15s ease,
-    transform 0.1s ease,
-    box-shadow 0.15s ease;
-}
-
-.btn-primary:hover {
-  background: var(--color-accent-hover);
-  box-shadow: 0 2px 8px rgb(99 102 241 / 0.25);
-}
-
-.btn-primary:active {
-  transform: scale(0.97);
-  box-shadow: none;
-}
-
-.btn-ghost {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 18px;
-  background: transparent;
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  font-size: 0.82rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition:
-    border-color 0.15s ease,
-    background 0.15s ease,
-    color 0.15s ease;
-}
-
-.btn-ghost:hover {
-  border-color: var(--color-accent-subtle);
-  background: var(--color-accent-mist);
-  color: var(--color-accent);
-}
-
-/* Card label with accent dot */
-.card-label::before {
-  content: '';
-  display: inline-block;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--color-accent);
-  margin-right: 7px;
-  vertical-align: middle;
-  flex-shrink: 0;
-}
-
-/* Section divider with gradient fade */
-.section-divider {
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    var(--color-accent) 0%,
-    var(--color-accent-subtle) 30%,
-    transparent 100%
-  );
-  border: none;
-  margin: var(--space-xl) 0;
-}
+/* List stagger — use with TransitionGroup */
+.list-enter-active { transition: all 0.3s ease; }
+.list-leave-active { transition: all 0.2s ease; position: absolute; }
+.list-enter-from { opacity: 0; transform: translateY(12px); }
+.list-leave-to { opacity: 0; transform: translateX(-12px); }
+.list-move { transition: transform 0.3s ease; }

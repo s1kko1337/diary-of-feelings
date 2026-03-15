@@ -59,10 +59,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ['vue', 'pinia', 'vue-router'],
-          gsap: ['gsap'],
           icons: ['lucide-vue-next'],
-          echarts: ['echarts', 'vue-echarts'],
-          draggable: ['vuedraggable'],
         },
       },
     },

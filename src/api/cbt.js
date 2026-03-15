@@ -1,7 +1,8 @@
 import { api } from './client.js'
 
-export function getAll() {
-  return api.get('/cbt')
+export async function getAll() {
+  const res = await api.get('/cbt')
+  return res.items ?? res
 }
 
 export function getById(id) {

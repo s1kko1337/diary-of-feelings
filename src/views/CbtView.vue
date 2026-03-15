@@ -1,482 +1,210 @@
 <template>
-  <div class="cbt-page">
+  <div class="space-y-6">
     <!-- Header -->
-    <div class="cbt-header">
-      <div class="cbt-header-left">
-        <div>
-          <h1 class="cbt-title">КПТ-дневник</h1>
-          <p class="cbt-subtitle">Помогает понять связь мыслей и эмоций</p>
-        </div>
+    <div class="flex items-end justify-between">
+      <div>
+        <h1 class="font-display text-3xl font-bold text-ink-900">КПТ дневник</h1>
+        <p class="text-ink-500 text-sm mt-1">Когнитивно-поведенческая терапия</p>
       </div>
-      <button class="new-entry-btn" @click="goToNew">
-        <PlusIcon :size="16" :stroke-width="1.8" />
-        <span class="new-entry-btn-text">Новая запись</span>
-      </button>
-    </div>
-
-    <!-- Stats row -->
-    <div v-if="store.entries.length > 0" class="stats-row">
-      <CbtStatCard :value="store.stats.total" label="записей" />
-      <CbtStatCard :value="store.stats.topDistortion || '—'" label="топ искажение" />
-      <CbtStatCard
-        :value="store.stats.weekCount"
-        label="за неделю"
-        :trend="store.stats.weekCount > 0 ? 'up' : null"
-      />
-    </div>
-
-    <!-- Filters -->
-    <div v-if="store.entries.length > 0" class="filters-row">
-      <div class="filter-pills">
-        <button
-          v-for="f in timeFilters"
-          :key="f.key"
-          class="filter-pill"
-          :class="{ 'filter-pill--active': activeTimeFilter === f.key }"
-          @click="setTimeFilter(f.key)"
-        >
-          {{ f.label }}
-        </button>
-      </div>
-      <select v-model="distortionFilter" class="filter-select" aria-label="Фильтр по искажению">
-        <option value="">Все искажения</option>
-        <option v-for="d in distortionOptions" :key="d.key" :value="d.key">
-          {{ d.label }}
-        </option>
-      </select>
-    </div>
-
-    <!-- Loading skeleton -->
-    <div v-if="store.isLoading" class="skeleton-list">
-      <div v-for="i in 3" :key="i" class="skeleton-card" />
-    </div>
-
-    <!-- Error state -->
-    <div v-else-if="error" class="error-banner">
-      <AlertCircleIcon :size="18" :stroke-width="1.8" />
-      <span>Не удалось загрузить записи. Попробуй ещё раз.</span>
-    </div>
-
-    <!-- Empty state -->
-    <div v-else-if="store.entries.length === 0" class="empty-state">
-      <svg
-        width="80"
-        height="80"
-        viewBox="0 0 80 80"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        class="empty-svg"
+      <button
+        @click="formOpen = true"
+        class="px-4 py-2.5 rounded-xl bg-terra-500 text-white text-sm font-semibold hover:bg-terra-600 transition-all shadow-sm hover:shadow-md active:scale-[0.97]"
       >
-        <rect x="1" y="1" width="38" height="38" stroke="currentColor" stroke-width="1.5" />
-        <rect x="41" y="1" width="38" height="38" stroke="currentColor" stroke-width="1.5" />
-        <rect x="1" y="41" width="38" height="38" stroke="currentColor" stroke-width="1.5" />
-        <rect x="56" y="56" width="8" height="8" fill="currentColor" />
-      </svg>
-      <h2 class="empty-title">Здесь будут твои записи СМЭР</h2>
-      <p class="empty-text">Первая запись — шаг к пониманию себя. Занимает 2–3 минуты.</p>
-      <button class="empty-cta" @click="goToNew">
-        Начать запись
-        <ArrowRightIcon :size="16" :stroke-width="1.8" />
+        + Записать
       </button>
     </div>
 
-    <!-- Filtered empty -->
-    <div v-else-if="filteredEntries.length === 0" class="filtered-empty">
-      <p class="filtered-empty-text">По этому фильтру записей не найдено</p>
-      <button class="filtered-empty-reset" @click="resetFilters">Сбросить фильтры</button>
+    <!-- Stats overview -->
+    <div v-if="store.entries.length" class="grid grid-cols-3 gap-2.5">
+      <div class="bg-white rounded-xl p-3 border border-ink-100 text-center">
+        <p class="text-xl font-display font-bold text-ink-900">{{ store.entries.length }}</p>
+        <p class="text-[10px] text-ink-400 mt-0.5 uppercase tracking-wider">Всего</p>
+      </div>
+      <div class="bg-white rounded-xl p-3 border border-ink-100 text-center">
+        <p class="text-xl font-display font-bold text-gold-500">{{ inProgressCount }}</p>
+        <p class="text-[10px] text-ink-400 mt-0.5 uppercase tracking-wider">В работе</p>
+      </div>
+      <div class="bg-white rounded-xl p-3 border border-ink-100 text-center">
+        <p class="text-xl font-display font-bold text-forest-500">{{ processedCount }}</p>
+        <p class="text-[10px] text-ink-400 mt-0.5 uppercase tracking-wider">Обработано</p>
+      </div>
     </div>
 
-    <!-- Entry cards list -->
-    <TransitionGroup v-else name="card-list" tag="div" class="entries-list">
-      <CbtEntryCard
-        v-for="entry in filteredEntries"
+    <!-- Status filter -->
+    <div class="flex gap-1.5 overflow-x-auto scrollbar-hide">
+      <button
+        v-for="f in filters"
+        :key="f.value"
+        @click="statusFilter = f.value"
+        class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors shrink-0 flex items-center gap-1.5"
+        :class="statusFilter === f.value ? f.active : 'bg-cream-200 text-ink-500 hover:bg-cream-300'"
+      >
+        <span class="w-2 h-2 rounded-full" :class="f.dot" />
+        {{ f.label }}
+      </button>
+    </div>
+
+    <!-- Entries -->
+    <div v-if="store.loading" class="text-sm text-ink-400 text-center py-10">Загрузка...</div>
+    <div v-else-if="filtered.length" class="grid sm:grid-cols-2 gap-3">
+      <CbtCard
+        v-for="entry in filtered"
         :key="entry.id"
         :entry="entry"
-        @open="goToEntry"
+        @select="selectEntry"
+        @remove="handleRemove"
       />
-    </TransitionGroup>
+    </div>
+    <div v-else class="text-center py-14">
+      <Brain class="w-8 h-8 text-ink-300 mx-auto mb-3" />
+      <p class="text-ink-400 text-sm">{{ statusFilter === 'all' ? 'Нет записей' : 'Нет записей с таким статусом' }}</p>
+      <button v-if="statusFilter === 'all'" @click="formOpen = true" class="mt-3 text-sm text-terra-500 hover:text-terra-600 font-semibold">
+        Создать первую запись
+      </button>
+    </div>
+
+    <!-- Detail modal -->
+    <BaseModal v-model="detailOpen" :title="'Запись КПТ'" size="lg">
+      <div v-if="detailEntry" class="space-y-5">
+        <!-- Status bar -->
+        <div class="flex gap-2">
+          <button
+            v-for="s in statusOptions"
+            :key="s.value"
+            @click="changeStatus(detailEntry.id, s.value)"
+            class="flex-1 py-2 rounded-xl text-xs font-semibold transition-all text-center"
+            :class="isStatus(detailEntry.status, s.value) ? s.active : 'bg-cream-200 text-ink-500 hover:bg-cream-300'"
+          >
+            {{ s.label }}
+          </button>
+        </div>
+
+        <!-- Fields -->
+        <div class="space-y-4">
+          <div>
+            <p class="text-[10px] font-semibold text-ink-400 uppercase tracking-wider mb-1.5">Ситуация</p>
+            <p class="text-sm text-ink-800 leading-relaxed bg-cream-50 rounded-xl px-4 py-3">{{ detailEntry.situation }}</p>
+          </div>
+          <div v-if="detailEntry.thoughts">
+            <p class="text-[10px] font-semibold text-ink-400 uppercase tracking-wider mb-1.5">Автоматические мысли</p>
+            <p class="text-sm text-ink-800 leading-relaxed bg-cream-50 rounded-xl px-4 py-3">{{ detailEntry.thoughts }}</p>
+          </div>
+          <div v-if="detailEntry.emotions?.length">
+            <p class="text-[10px] font-semibold text-ink-400 uppercase tracking-wider mb-1.5">Эмоции</p>
+            <div class="flex flex-wrap gap-1.5">
+              <span v-for="(em, i) in detailEntry.emotions" :key="i" class="text-xs px-3 py-1.5 rounded-xl bg-coral-300/20 text-coral-600 font-medium">
+                {{ em.name }} <span class="opacity-60">({{ em.intensity }})</span>
+              </span>
+            </div>
+          </div>
+          <div v-if="detailEntry.distortions?.length">
+            <p class="text-[10px] font-semibold text-ink-400 uppercase tracking-wider mb-1.5">Когнитивные искажения</p>
+            <div class="flex flex-wrap gap-1.5">
+              <span v-for="d in detailEntry.distortions" :key="d" class="text-xs px-3 py-1.5 rounded-xl bg-violet-300/20 text-violet-600 font-medium">{{ d }}</span>
+            </div>
+          </div>
+          <div v-if="detailEntry.challenging">
+            <p class="text-[10px] font-semibold text-ink-400 uppercase tracking-wider mb-1.5">Оспаривание</p>
+            <p class="text-sm text-ink-800 leading-relaxed bg-cream-50 rounded-xl px-4 py-3">{{ detailEntry.challenging }}</p>
+          </div>
+          <div v-if="detailEntry.alternativeThought">
+            <p class="text-[10px] font-semibold text-ink-400 uppercase tracking-wider mb-1.5">Альтернативная мысль</p>
+            <p class="text-sm text-forest-700 leading-relaxed bg-forest-200/20 rounded-xl px-4 py-3 border border-forest-200/40">
+              {{ detailEntry.alternativeThought }}
+            </p>
+          </div>
+          <div v-if="detailEntry.emotionsAfter?.length">
+            <p class="text-[10px] font-semibold text-ink-400 uppercase tracking-wider mb-1.5">Эмоции после</p>
+            <div class="flex flex-wrap gap-1.5">
+              <span v-for="(em, i) in detailEntry.emotionsAfter" :key="i" class="text-xs px-3 py-1.5 rounded-xl bg-forest-200/40 text-forest-700 font-medium">
+                {{ em.name }} <span class="opacity-60">({{ em.intensity }})</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </BaseModal>
+
+    <CbtForm
+      :open="formOpen"
+      :initial="editEntry"
+      @save="handleSave"
+      @close="formOpen = false; editEntry = null"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { PlusIcon, ArrowRightIcon, AlertCircleIcon } from 'lucide-vue-next'
 import { useCbtStore } from '@/stores/cbt'
-import { distortions } from '@/api/mock/data/distortions'
-import CbtEntryCard from '@/components/cbt/CbtEntryCard.vue'
-import CbtStatCard from '@/components/cbt/CbtStatCard.vue'
+import CbtCard from '@/components/cbt/CbtCard.vue'
+import CbtForm from '@/components/cbt/CbtForm.vue'
+import BaseModal from '@/components/ui/BaseModal.vue'
+import { Brain } from 'lucide-vue-next'
 
-const router = useRouter()
 const store = useCbtStore()
+const formOpen = ref(false)
+const editEntry = ref(null)
+const detailOpen = ref(false)
+const detailEntry = ref(null)
+const statusFilter = ref('all')
 
-const error = ref(false)
-const activeTimeFilter = ref('all')
-const distortionFilter = ref('')
-
-const timeFilters = [
-  { key: 'all', label: 'Все' },
-  { key: 'week', label: 'Эта неделя' },
-  { key: 'month', label: 'Этот месяц' },
+const filters = [
+  { value: 'all', label: 'Все', active: 'bg-ink-800 text-white', dot: 'bg-ink-400' },
+  { value: 'new', label: 'Новые', active: 'bg-sky-500 text-white', dot: 'bg-sky-400' },
+  { value: 'in_progress', label: 'В работе', active: 'bg-gold-500 text-white', dot: 'bg-gold-400' },
+  { value: 'processed', label: 'Обработанные', active: 'bg-forest-500 text-white', dot: 'bg-forest-400' },
 ]
 
-const distortionOptions = distortions.map((d) => ({
-  key: d.key,
-  label: d.label,
-}))
+const statusOptions = [
+  { value: 'new', label: 'Новая', active: 'bg-sky-500 text-white' },
+  { value: 'in_progress', label: 'В работе', active: 'bg-gold-500 text-white' },
+  { value: 'processed', label: 'Обработана', active: 'bg-forest-500 text-white' },
+]
 
-const filteredEntries = computed(() => {
-  let result = store.entries
+onMounted(() => store.fetchAll())
 
-  // Time filter
-  if (activeTimeFilter.value === 'week') {
-    const weekAgo = new Date(Date.now() - 7 * 86400000)
-    result = result.filter((e) => new Date(e.createdAt) >= weekAgo)
-  } else if (activeTimeFilter.value === 'month') {
-    const now = new Date()
-    result = result.filter((e) => {
-      const d = new Date(e.createdAt)
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
-    })
-  }
+const inProgressCount = computed(() =>
+  store.entries.filter(e => e.status === 'in_progress' || e.status === 'inProgress').length
+)
+const processedCount = computed(() =>
+  store.entries.filter(e => e.status === 'processed').length
+)
 
-  // Distortion filter
-  if (distortionFilter.value) {
-    result = result.filter((e) => e.distortion === distortionFilter.value)
-  }
-
-  return result
+const filtered = computed(() => {
+  if (statusFilter.value === 'all') return store.entries
+  return store.entries.filter(e => isStatus(e.status, statusFilter.value))
 })
 
-function setTimeFilter(key) {
-  activeTimeFilter.value = key
+function isStatus(entryStatus, filterValue) {
+  if (entryStatus === filterValue) return true
+  if (filterValue === 'in_progress' && entryStatus === 'inProgress') return true
+  if (filterValue === 'inProgress' && entryStatus === 'in_progress') return true
+  return false
 }
 
-function resetFilters() {
-  activeTimeFilter.value = 'all'
-  distortionFilter.value = ''
-}
+function selectEntry(entry) { detailEntry.value = entry; detailOpen.value = true }
 
-function goToNew() {
-  router.push({ name: 'cbt-new' })
-}
-
-function goToEntry(id) {
-  router.push({ name: 'cbt-entry', params: { id } })
-}
-
-onMounted(async () => {
-  try {
-    await store.loadEntries()
-  } catch {
-    error.value = true
+async function handleSave(data) {
+  if (data.id) {
+    const { id, ...rest } = data
+    await store.updateEntry(id, rest)
+  } else {
+    await store.addEntry(data)
   }
-})
+  formOpen.value = false
+  editEntry.value = null
+}
+
+async function handleRemove(id) { await store.removeEntry(id) }
+
+async function changeStatus(id, status) {
+  await store.changeStatus(id, status)
+  detailEntry.value = store.entries.find(e => e.id === id) || detailEntry.value
+}
 </script>
 
 <style scoped>
-.cbt-page {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 1rem 1rem 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xl);
-}
-
-@media (min-width: 768px) {
-  .cbt-page {
-    padding: 1.5rem 0 2rem;
-  }
-}
-
-/* Header */
-.cbt-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-}
-
-.cbt-header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.cbt-title {
-  font-size: 2.25rem;
-  font-weight: 800;
-  color: var(--color-text);
-  letter-spacing: -0.04em;
-  line-height: 1.15;
-}
-
-.cbt-subtitle {
-  font-size: 0.9rem;
-  color: var(--color-text-secondary);
-  margin-top: 2px;
-}
-
-.new-entry-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 18px;
-  border-radius: var(--radius-md);
-  background: var(--color-primary);
-  color: white;
-  border: none;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.15s ease;
-  flex-shrink: 0;
-}
-
-.new-entry-btn:hover {
-  opacity: 0.85;
-}
-
-.new-entry-btn:active {
-  opacity: 0.75;
-}
-
-@media (max-width: 480px) {
-  .new-entry-btn-text {
-    display: none;
-  }
-
-  .new-entry-btn {
-    padding: 10px;
-    border-radius: 50%;
-  }
-}
-
-/* Stats */
-.stats-row {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.stats-row::-webkit-scrollbar {
-  display: none;
-}
-
-/* Filters */
-.filters-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.filter-pills {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.filter-pills::-webkit-scrollbar {
-  display: none;
-}
-
-.filter-pill {
-  padding: 6px 16px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  background: transparent;
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.filter-pill:hover {
-  border-color: var(--color-accent-subtle);
-  background: var(--color-accent-mist);
-  color: var(--color-accent);
-}
-
-.filter-pill--active {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  color: white;
-  box-shadow: 0 1px 4px rgb(99 102 241 / 0.3);
-}
-
-.filter-select {
-  padding: 6px 28px 6px 12px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  background: transparent;
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237b7394' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  font-family: var(--font-main);
-}
-
-.filter-select:focus {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-/* Entry list */
-.entries-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* Skeleton loading */
-.skeleton-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.skeleton-card {
-  height: 140px;
-  border-radius: var(--radius-lg);
-  background: linear-gradient(
-    90deg,
-    var(--color-surface-hover) 25%,
-    var(--color-surface) 50%,
-    var(--color-surface-hover) 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-/* Error */
-.error-banner {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 18px;
-  border-radius: var(--radius-lg);
-  background: var(--color-rose-soft);
-  border: 1px solid rgb(240 184 192 / 0.3);
-  color: var(--color-text);
-  font-size: 0.85rem;
-}
-
-/* Empty state */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 3rem 1rem;
-}
-
-.empty-svg {
-  color: var(--color-border);
-  margin-bottom: 1.5rem;
-}
-
-.empty-title {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--color-text);
-  margin-bottom: 8px;
-}
-
-.empty-text {
-  font-size: 0.88rem;
-  color: var(--color-text-secondary);
-  line-height: 1.65;
-  max-width: 320px;
-  margin-bottom: 1.5rem;
-}
-
-.empty-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 24px;
-  border-radius: var(--radius-md);
-  background: var(--color-primary);
-  color: white;
-  border: none;
-  font-size: 0.88rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.15s ease;
-}
-
-.empty-cta:hover {
-  opacity: 0.85;
-}
-
-/* Filtered empty */
-.filtered-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 2rem 1rem;
-  gap: 12px;
-}
-
-.filtered-empty-text {
-  font-size: 0.88rem;
-  color: var(--color-text-muted);
-}
-
-.filtered-empty-reset {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--color-primary);
-  background: none;
-  border: none;
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-/* Card list transitions */
-.card-list-enter-active {
-  transition: all 0.3s ease;
-}
-
-.card-list-leave-active {
-  transition: all 0.2s ease;
-}
-
-.card-list-enter-from {
-  opacity: 0;
-  transform: translateY(8px);
-}
-
-.card-list-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
-}
-
-.filter-pill:focus-visible,
-.new-entry-btn:focus-visible,
-.empty-cta:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 </style>

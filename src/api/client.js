@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 
 export class ApiError extends Error {
   constructor(message, code = 500) {
@@ -18,6 +18,15 @@ export function setToken(token) {
 
 export function clearToken() {
   localStorage.removeItem('dof-token')
+  localStorage.removeItem('dof-refresh-token')
+}
+
+export function getRefreshToken() {
+  return localStorage.getItem('dof-refresh-token')
+}
+
+export function setRefreshToken(token) {
+  localStorage.setItem('dof-refresh-token', token)
 }
 
 function camelize(str) {
@@ -33,6 +42,7 @@ function transformKeys(val) {
 }
 
 const _inflight = new Map()
+let _refreshPromise = null
 
 function userFriendlyError(status, detail) {
   if (status === 429) return 'Слишком много запросов. Попробуйте через минуту.'
@@ -40,7 +50,25 @@ function userFriendlyError(status, detail) {
   return detail || `Ошибка ${status}`
 }
 
-async function http(method, path, body) {
+async function tryRefresh() {
+  if (_refreshPromise) return _refreshPromise
+  const rt = getRefreshToken()
+  if (!rt) return false
+  _refreshPromise = fetch(`${BASE_URL}/auth/refresh`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token: rt }),
+  }).then(async (res) => {
+    if (!res.ok) return false
+    const data = transformKeys(await res.json())
+    if (data.accessToken) setToken(data.accessToken)
+    if (data.refreshToken) setRefreshToken(data.refreshToken)
+    return true
+  }).catch(() => false).finally(() => { _refreshPromise = null })
+  return _refreshPromise
+}
+
+async function http(method, path, body, _retried = false) {
   const token = getToken()
   const headers = { 'Content-Type': 'application/json' }
   if (token) headers['Authorization'] = `Bearer ${token}`
@@ -59,9 +87,18 @@ async function http(method, path, body) {
 
     const data = await res.json().catch(() => ({}))
 
+    if (res.status === 401 && !_retried) {
+      const refreshed = await tryRefresh()
+      if (refreshed) return http(method, path, body, true)
+      clearToken()
+      if (!window.location.pathname.startsWith('/auth')) {
+        window.location.replace('/auth')
+      }
+      throw new ApiError('Сессия истекла. Войдите снова.', 401)
+    }
+
     if (res.status === 401) {
       clearToken()
-      // Redirect to auth only if not already there
       if (!window.location.pathname.startsWith('/auth')) {
         window.location.replace('/auth')
       }

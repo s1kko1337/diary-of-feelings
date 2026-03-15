@@ -1,22 +1,21 @@
-import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import { notesApi } from '@/api/notes.js'
+import { ref } from 'vue'
+import { notesApi } from '@/api/notes'
 
 export const useNotesStore = defineStore('notes', () => {
   const notes = ref([])
   const loading = ref(false)
-  const search = ref('')
 
-  async function fetchNotes() {
+  async function fetchNotes(params) {
     loading.value = true
     try {
-      notes.value = await notesApi.getNotes({ search: search.value })
+      notes.value = await notesApi.getNotes(params)
     } finally {
       loading.value = false
     }
   }
 
-  async function createNote(data) {
+  async function addNote(data) {
     const note = await notesApi.createNote(data)
     notes.value.unshift(note)
     return note
@@ -24,15 +23,15 @@ export const useNotesStore = defineStore('notes', () => {
 
   async function updateNote(id, data) {
     const updated = await notesApi.updateNote(id, data)
-    const idx = notes.value.findIndex((n) => n.id === id)
+    const idx = notes.value.findIndex(n => n.id === id)
     if (idx !== -1) notes.value[idx] = updated
     return updated
   }
 
-  async function deleteNote(id) {
+  async function removeNote(id) {
     await notesApi.deleteNote(id)
-    notes.value = notes.value.filter((n) => n.id !== id)
+    notes.value = notes.value.filter(n => n.id !== id)
   }
 
-  return { notes, loading, search, fetchNotes, createNote, updateNote, deleteNote }
+  return { notes, loading, fetchNotes, addNote, updateNote, removeNote }
 })

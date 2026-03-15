@@ -1,324 +1,151 @@
 <template>
-  <div class="auth-bg">
-    <div class="auth-orb auth-orb--1" />
-    <div class="auth-orb auth-orb--2" />
+  <div class="min-h-screen bg-cream-100 flex">
+    <!-- Left decorative panel (desktop) -->
+    <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-terra-500 via-terra-600 to-terra-700 relative overflow-hidden items-center justify-center">
+      <!-- Floating shapes -->
+      <div class="absolute top-16 -left-8 w-56 h-56 rounded-full bg-white/5 blur-sm" />
+      <div class="absolute bottom-24 right-12 w-40 h-40 rounded-full bg-white/8" />
+      <div class="absolute top-1/3 right-1/4 w-24 h-24 rounded-full bg-white/5" />
+      <div class="absolute bottom-1/3 left-1/4 w-16 h-16 rounded-full bg-white/10" />
 
-    <div class="auth-card">
-      <!-- Logo -->
-      <div class="auth-logo">
-        <div class="auth-logo-icon">💜</div>
-        <h1 class="auth-title">Diary of Feelings</h1>
-        <p class="auth-subtitle">Твоё личное пространство для рефлексии</p>
+      <div class="relative z-10 text-center px-12 max-w-lg">
+        <h1 class="font-display text-5xl font-bold text-white leading-tight mb-6">
+          Diary of<br />Feelings
+        </h1>
+        <div class="w-12 h-0.5 bg-white/30 mx-auto mb-6" />
+        <p class="text-terra-200 text-lg leading-relaxed font-light">
+          Пространство для рефлексии, осознанности и заботы о себе
+        </p>
+        <div class="flex justify-center gap-8 mt-10 text-terra-300 text-sm">
+          <div class="text-center">
+            <p class="text-2xl font-display font-bold text-white">AI</p>
+            <p>Ассистент</p>
+          </div>
+          <div class="text-center">
+            <p class="text-2xl font-display font-bold text-white">КПТ</p>
+            <p>Дневник</p>
+          </div>
+          <div class="text-center">
+            <p class="text-2xl font-display font-bold text-white">\u221E</p>
+            <p>Инсайты</p>
+          </div>
+        </div>
       </div>
+    </div>
 
-      <!-- Tabs -->
-      <div class="auth-tabs">
-        <button
-          class="auth-tab"
-          :class="{ active: mode === 'login' }"
-          @click="mode = 'login'"
-        >
-          Вход
-        </button>
-        <button
-          class="auth-tab"
-          :class="{ active: mode === 'register' }"
-          @click="mode = 'register'"
-        >
-          Регистрация
-        </button>
+    <!-- Right form panel -->
+    <div class="flex-1 flex items-center justify-center p-6 sm:p-12">
+      <div class="w-full max-w-md">
+        <!-- Mobile logo -->
+        <div class="lg:hidden text-center mb-10">
+          <h1 class="font-display text-3xl font-bold text-ink-900">
+            Diary of <span class="text-terra-500">Feelings</span>
+          </h1>
+          <p class="text-sm text-ink-400 mt-2">Ваш личный дневник эмоций</p>
+        </div>
+
+        <!-- Tab switch -->
+        <div class="flex bg-cream-200 rounded-2xl p-1.5 mb-8">
+          <button
+            v-for="tab in ['login', 'register']"
+            :key="tab"
+            @click="mode = tab; error = ''"
+            class="flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200"
+            :class="mode === tab ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-500 hover:text-ink-700'"
+          >
+            {{ tab === 'login' ? 'Войти' : 'Регистрация' }}
+          </button>
+        </div>
+
+        <form @submit.prevent="handleSubmit" class="space-y-4">
+          <div>
+            <label class="block text-sm font-semibold text-ink-700 mb-1.5">Email</label>
+            <input
+              v-model="form.email"
+              type="email"
+              required
+              autocomplete="email"
+              placeholder="your@email.com"
+              class="w-full rounded-xl border border-ink-200 bg-white px-4 py-3 text-ink-900 placeholder:text-ink-400 focus:border-terra-400 focus:outline-none focus:ring-2 focus:ring-terra-100 transition-colors"
+            />
+          </div>
+
+          <Transition name="fade">
+            <div v-if="mode === 'register'">
+              <label class="block text-sm font-semibold text-ink-700 mb-1.5">Имя пользователя</label>
+              <input
+                v-model="form.username"
+                type="text"
+                required
+                autocomplete="username"
+                placeholder="Как вас называть?"
+                minlength="3"
+                class="w-full rounded-xl border border-ink-200 bg-white px-4 py-3 text-ink-900 placeholder:text-ink-400 focus:border-terra-400 focus:outline-none focus:ring-2 focus:ring-terra-100 transition-colors"
+              />
+            </div>
+          </Transition>
+
+          <div>
+            <label class="block text-sm font-semibold text-ink-700 mb-1.5">Пароль</label>
+            <input
+              v-model="form.password"
+              type="password"
+              required
+              :autocomplete="mode === 'login' ? 'current-password' : 'new-password'"
+              placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"
+              class="w-full rounded-xl border border-ink-200 bg-white px-4 py-3 text-ink-900 placeholder:text-ink-400 focus:border-terra-400 focus:outline-none focus:ring-2 focus:ring-terra-100 transition-colors"
+            />
+          </div>
+
+          <Transition name="fade">
+            <p v-if="error" class="text-sm text-rose-600 bg-rose-300/10 px-4 py-3 rounded-xl border border-rose-200/50">
+              {{ error }}
+            </p>
+          </Transition>
+
+          <button
+            type="submit"
+            :disabled="auth.loading"
+            class="w-full py-3.5 rounded-xl bg-terra-500 text-white font-semibold hover:bg-terra-600 transition-all active:scale-[0.98] disabled:opacity-50 shadow-md hover:shadow-lg text-sm"
+          >
+            <span v-if="auth.loading" class="inline-flex items-center gap-2">
+              <svg class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25" />
+                <path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="3" stroke-linecap="round" class="opacity-75" />
+              </svg>
+              Загрузка...
+            </span>
+            <span v-else>{{ mode === 'login' ? 'Войти' : 'Создать аккаунт' }}</span>
+          </button>
+        </form>
       </div>
-
-      <!-- Error -->
-      <Transition name="fade">
-        <div v-if="error" class="auth-error">
-          {{ error }}
-        </div>
-      </Transition>
-
-      <!-- Login form -->
-      <form v-if="mode === 'login'" class="auth-form" @submit.prevent="handleLogin">
-        <div class="field">
-          <label>Email</label>
-          <input
-            v-model="email"
-            type="email"
-            placeholder="you@example.com"
-            autocomplete="email"
-            required
-          />
-        </div>
-        <div class="field">
-          <label>Пароль</label>
-          <input
-            v-model="password"
-            type="password"
-            placeholder="••••••••"
-            autocomplete="current-password"
-            required
-          />
-        </div>
-        <button type="submit" class="auth-btn" :disabled="authStore.isLoading">
-          <span v-if="authStore.isLoading">Входим...</span>
-          <span v-else>Войти</span>
-        </button>
-      </form>
-
-      <!-- Register form -->
-      <form v-else class="auth-form" @submit.prevent="handleRegister">
-        <div class="field">
-          <label>Email</label>
-          <input
-            v-model="email"
-            type="email"
-            placeholder="you@example.com"
-            autocomplete="email"
-            required
-          />
-        </div>
-        <div class="field">
-          <label>Имя</label>
-          <input
-            v-model="username"
-            type="text"
-            placeholder="Как тебя зовут?"
-            autocomplete="username"
-            required
-          />
-        </div>
-        <div class="field">
-          <label>Пароль</label>
-          <input
-            v-model="password"
-            type="password"
-            placeholder="Минимум 8 символов"
-            autocomplete="new-password"
-            minlength="8"
-            required
-          />
-        </div>
-        <button type="submit" class="auth-btn" :disabled="authStore.isLoading">
-          <span v-if="authStore.isLoading">Создаём аккаунт...</span>
-          <span v-else>Создать аккаунт</span>
-        </button>
-      </form>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
-const authStore = useAuthStore()
+const auth = useAuthStore()
 
 const mode = ref('login')
-const email = ref('')
-const username = ref('')
-const password = ref('')
 const error = ref('')
+const form = reactive({ email: '', username: '', password: '' })
 
-async function handleLogin() {
+async function handleSubmit() {
   error.value = ''
   try {
-    await authStore.login(email.value, password.value)
+    if (mode.value === 'login') {
+      await auth.login(form.email, form.password)
+    } else {
+      await auth.register(form.email, form.username, form.password)
+    }
     router.push({ name: 'home' })
-  } catch (e) {
-    error.value = e.message || 'Неверный email или пароль'
-  }
-}
-
-async function handleRegister() {
-  error.value = ''
-  try {
-    await authStore.register(email.value, username.value, password.value)
-    router.push({ name: 'home' })
-  } catch (e) {
-    error.value = e.message || 'Не удалось создать аккаунт'
+  } catch (err) {
+    error.value = err.message || 'Произошла ошибка'
   }
 }
 </script>
-
-<style scoped>
-.auth-bg {
-  min-height: 100dvh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
-  background: var(--gradient-bg, linear-gradient(145deg, #faf9f7 0%, #f0ecf8 50%, #ecf6f1 100%));
-  position: relative;
-  overflow: hidden;
-}
-
-.auth-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.35;
-  pointer-events: none;
-}
-.auth-orb--1 {
-  width: 400px;
-  height: 400px;
-  background: #c4b5e0;
-  top: -100px;
-  right: -100px;
-  animation: drift 22s ease-in-out infinite alternate;
-}
-.auth-orb--2 {
-  width: 300px;
-  height: 300px;
-  background: #a8dfc8;
-  bottom: -80px;
-  left: -80px;
-  animation: drift 18s ease-in-out infinite alternate-reverse;
-}
-
-@keyframes drift {
-  from { transform: translate(0, 0) scale(1); }
-  to { transform: translate(30px, 20px) scale(1.05); }
-}
-
-.auth-card {
-  width: 100%;
-  max-width: 420px;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 24px;
-  padding: 2.5rem 2rem;
-  box-shadow: 0 8px 40px rgba(100, 80, 160, 0.12);
-  position: relative;
-  z-index: 1;
-}
-
-.auth-logo {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-.auth-logo-icon {
-  font-size: 2.5rem;
-  margin-bottom: 0.5rem;
-}
-.auth-title {
-  font-size: 1.4rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: var(--color-text, #1a1714);
-  margin: 0 0 0.3rem;
-}
-.auth-subtitle {
-  font-size: 0.85rem;
-  color: var(--color-text-secondary, rgba(26, 23, 20, 0.55));
-  margin: 0;
-}
-
-.auth-tabs {
-  display: flex;
-  gap: 0.5rem;
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 12px;
-  padding: 4px;
-  margin-bottom: 1.5rem;
-}
-.auth-tab {
-  flex: 1;
-  padding: 0.5rem;
-  border: none;
-  background: transparent;
-  border-radius: 9px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--color-text-secondary, rgba(26, 23, 20, 0.55));
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.auth-tab.active {
-  background: white;
-  color: var(--color-text, #1a1714);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.auth-error {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  color: #dc2626;
-  border-radius: 10px;
-  padding: 0.65rem 0.9rem;
-  font-size: 0.85rem;
-  margin-bottom: 1rem;
-}
-
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-.field label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--color-text-secondary, rgba(26, 23, 20, 0.55));
-}
-.field input {
-  padding: 0.7rem 0.9rem;
-  border: 1.5px solid rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
-  font-size: 0.95rem;
-  background: rgba(255, 255, 255, 0.8);
-  color: var(--color-text, #1a1714);
-  outline: none;
-  transition: border-color 0.2s ease;
-  font-family: inherit;
-}
-.field input:focus {
-  border-color: #6366f1;
-}
-.field input::placeholder {
-  color: rgba(26, 23, 20, 0.3);
-}
-
-.auth-btn {
-  margin-top: 0.5rem;
-  padding: 0.8rem;
-  background: #6366f1;
-  color: white;
-  border: none;
-  border-radius: 14px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: inherit;
-}
-.auth-btn:hover:not(:disabled) {
-  background: #4f46e5;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
-}
-.auth-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(-4px);
-}
-</style>

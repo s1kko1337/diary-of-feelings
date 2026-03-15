@@ -1,9 +1,10 @@
 import { api } from './client.js'
 
 export const notesApi = {
-  getNotes: (params) => {
+  getNotes: async (params) => {
     const q = params ? `?${new URLSearchParams(params)}` : ''
-    return api.get(`/notes${q}`)
+    const res = await api.get(`/notes${q}`)
+    return res.items ?? res
   },
   createNote: (data) => api.post('/notes', data),
   updateNote: (id, data) => api.patch(`/notes/${id}`, data),

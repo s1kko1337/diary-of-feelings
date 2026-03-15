@@ -1,9 +1,10 @@
 import { api } from './client.js'
 
 export const tasksApi = {
-  getTasks: (params) => {
+  getTasks: async (params) => {
     const q = params ? `?${new URLSearchParams(params)}` : ''
-    return api.get(`/tasks${q}`)
+    const res = await api.get(`/tasks${q}`)
+    return res.items ?? res
   },
   createTask: (data) => api.post('/tasks', data),
   updateTask: (id, data) => api.patch(`/tasks/${id}`, data),

@@ -1,64 +1,65 @@
-import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import * as emotionsApi from '@/api/emotions'
+import { ref } from 'vue'
+import { create, getByDate, getHistory, getStats, remove, update, getCapsules, getRevealedCapsules } from '@/api/emotions'
 
 export const useEmotionsStore = defineStore('emotions', () => {
-  const todayEntries = ref([])
-  const history = ref([])
-  const patterns = ref(null)
-  const isLoading = ref(false)
+  const entries = ref([])
+  const stats = ref(null)
+  const loading = ref(false)
+  const capsules = ref([])
+  const revealedCapsules = ref([])
 
-  const hasEntryToday = computed(() => todayEntries.value.length > 0)
-
-  const recentEmotions = computed(() => history.value.slice(0, 10))
-
-  async function createEntry(data) {
-    isLoading.value = true
+  async function fetchByDate(date) {
+    loading.value = true
     try {
-      const entry = await emotionsApi.create(data)
-      todayEntries.value.unshift(entry)
-      history.value.unshift(entry)
-      return entry
+      entries.value = await getByDate(date)
     } finally {
-      isLoading.value = false
+      loading.value = false
     }
   }
 
-  async function loadToday() {
-    const date = new Date().toISOString().slice(0, 10)
-    todayEntries.value = await emotionsApi.getByDate(date)
-  }
-
-  async function loadHistory(range) {
-    isLoading.value = true
+  async function fetchHistory(params) {
+    loading.value = true
     try {
-      history.value = await emotionsApi.getHistory(range)
+      entries.value = await getHistory(params)
     } finally {
-      isLoading.value = false
+      loading.value = false
     }
   }
 
-  async function loadPatterns() {
-    patterns.value = await emotionsApi.getPatterns()
+  async function fetchStats() {
+    stats.value = await getStats()
   }
 
-  async function removeEntry(id) {
-    await emotionsApi.remove(id)
-    todayEntries.value = todayEntries.value.filter((e) => e.id !== id)
-    history.value = history.value.filter((e) => e.id !== id)
+  async function addEmotion(data) {
+    const entry = await create(data)
+    entries.value.unshift(entry)
+    return entry
+  }
+
+  async function updateEmotion(id, data) {
+    const updated = await update(id, data)
+    const idx = entries.value.findIndex(e => e.id === id)
+    if (idx !== -1) entries.value[idx] = { ...entries.value[idx], ...updated }
+    return updated
+  }
+
+  async function removeEmotion(id) {
+    await remove(id)
+    entries.value = entries.value.filter(e => e.id !== id)
+  }
+
+  async function fetchCapsules() {
+    capsules.value = await getCapsules()
+  }
+
+  async function fetchRevealedCapsules() {
+    revealedCapsules.value = await getRevealedCapsules()
   }
 
   return {
-    todayEntries,
-    history,
-    patterns,
-    isLoading,
-    hasEntryToday,
-    recentEmotions,
-    createEntry,
-    loadToday,
-    loadHistory,
-    loadPatterns,
-    removeEntry,
+    entries, stats, loading, capsules, revealedCapsules,
+    fetchByDate, fetchHistory, fetchStats, addEmotion, updateEmotion, removeEmotion,
+    fetchCapsules, fetchRevealedCapsules,
   }
 })

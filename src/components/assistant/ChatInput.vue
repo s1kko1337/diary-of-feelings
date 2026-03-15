@@ -1,115 +1,47 @@
 <template>
-  <div class="chat-input">
+  <form @submit.prevent="send" class="flex items-end gap-2 p-4 bg-white/80 backdrop-blur-sm border-t border-ink-100">
     <textarea
-      ref="textareaRef"
+      ref="inputEl"
       v-model="text"
-      class="chat-input__field"
-      placeholder="Напиши что-нибудь..."
+      placeholder="Напишите Лее..."
       rows="1"
-      :disabled="disabled"
-      @keydown.enter.exact.prevent="handleSend"
+      class="flex-1 rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm text-ink-900 placeholder:text-ink-400 resize-none focus:border-terra-400 focus:outline-none focus:ring-2 focus:ring-terra-100 max-h-32"
       @input="autoResize"
+      @keydown.enter.exact.prevent="send"
     />
-    <button class="chat-input__send" :disabled="!text.trim() || disabled" @click="handleSend">
-      <SendIcon :size="18" :stroke-width="1.8" />
+    <button
+      type="submit"
+      :disabled="!text.trim() || disabled"
+      class="p-2.5 rounded-xl bg-terra-500 text-white hover:bg-terra-600 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm shrink-0"
+    >
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg>
     </button>
-  </div>
+  </form>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import { SendIcon } from 'lucide-vue-next'
 
-defineProps({
-  disabled: { type: Boolean, default: false },
+const props = defineProps({
+  disabled: Boolean,
 })
-
 const emit = defineEmits(['send'])
-const text = ref('')
-const textareaRef = ref(null)
 
-function handleSend() {
-  if (!text.value.trim()) return
-  emit('send', text.value.trim())
-  text.value = ''
-  if (textareaRef.value) {
-    textareaRef.value.style.height = 'auto'
-  }
-}
+const text = ref('')
+const inputEl = ref(null)
 
 function autoResize() {
-  if (!textareaRef.value) return
-  textareaRef.value.style.height = 'auto'
-  textareaRef.value.style.height = `${Math.min(textareaRef.value.scrollHeight, 120)}px`
+  const el = inputEl.value
+  if (!el) return
+  el.style.height = 'auto'
+  el.style.height = Math.min(el.scrollHeight, 128) + 'px'
+}
+
+function send() {
+  const val = text.value.trim()
+  if (!val || props.disabled) return
+  emit('send', val)
+  text.value = ''
+  if (inputEl.value) inputEl.value.style.height = 'auto'
 }
 </script>
-
-<style scoped>
-.chat-input {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  background: var(--color-surface-solid);
-  border-top: 1px solid var(--color-border);
-}
-
-.chat-input__field {
-  flex: 1;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  padding: 0.55rem 0.9rem;
-  font-size: 0.9rem;
-  font-family: var(--font-main);
-  color: var(--color-text);
-  background: var(--color-bg);
-  resize: none;
-  line-height: 1.4;
-  overflow: hidden;
-  transition: border-color 0.15s;
-}
-
-.chat-input__field::placeholder {
-  color: var(--color-text-muted);
-}
-
-.chat-input__field:focus {
-  outline: none;
-  border-color: var(--color-accent);
-}
-
-.chat-input__field:disabled {
-  opacity: 0.6;
-}
-
-.chat-input__send {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  border: none;
-  background: var(--color-accent);
-  color: white;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition:
-    background 0.15s,
-    box-shadow 0.15s;
-}
-
-.chat-input__send:hover:not(:disabled) {
-  background: var(--color-accent-hover);
-  box-shadow: var(--shadow-card);
-}
-
-.chat-input__send:active:not(:disabled) {
-  transform: scale(0.97);
-}
-
-.chat-input__send:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-</style>
