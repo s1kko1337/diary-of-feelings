@@ -34,7 +34,22 @@
       </RouterLink>
     </nav>
 
-    <div v-if="auth.user" class="px-4 py-4 border-t border-ink-100 mt-auto">
+    <div v-if="auth.isAdmin" class="px-3 mt-auto">
+      <RouterLink
+        to="/admin"
+        class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
+        :class="
+          route.path.startsWith('/admin')
+            ? 'bg-ink-900 text-cream-100'
+            : 'text-ink-500 hover:bg-ink-100 hover:text-ink-800'
+        "
+      >
+        <Shield class="w-[18px] h-[18px] shrink-0" :stroke-width="1.8" />
+        Админ-панель
+      </RouterLink>
+    </div>
+
+    <div v-if="auth.user" class="px-4 py-4 border-t border-ink-100" :class="{ 'mt-auto': !auth.isAdmin, 'mt-3': auth.isAdmin }">
       <div class="flex items-center gap-3">
         <RouterLink to="/settings" class="flex items-center gap-3 flex-1 min-w-0 rounded-lg hover:bg-cream-100 -ml-1 pl-1 py-0.5 transition-colors">
           <div
@@ -75,6 +90,7 @@ import {
   Settings,
   Search,
   LogOut,
+  Shield,
 } from 'lucide-vue-next'
 
 const route = useRoute()

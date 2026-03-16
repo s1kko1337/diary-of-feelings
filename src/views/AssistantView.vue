@@ -55,18 +55,19 @@
         </div>
       </div>
 
-      <!-- Messages -->
+      <!-- Messages (skip empty streaming placeholder) -->
       <ChatMessage
         v-for="(msg, i) in store.messages"
         :key="i"
+        v-show="!(store.streaming && msg.role === 'assistant' && !msg.content)"
         :message="msg"
         :displayText="store.getDisplayText(i)"
         :isTyping="store.isTypingAt(i)"
         @skip="store.skipTypewriter()"
       />
 
-      <!-- Sending indicator (only when NOT streaming, since streaming shows text directly) -->
-      <div v-if="store.sending && !store.streaming" class="flex gap-3 max-w-[88%]">
+      <!-- Thinking indicator: non-streaming wait OR streaming before first token -->
+      <div v-if="store.sending && (!store.streaming || streamingEmpty)" class="flex gap-3 max-w-[88%]">
         <div class="w-9 h-9 rounded-full bg-gradient-to-br from-forest-300 to-forest-500 flex items-center justify-center shrink-0 shadow-sm">
           <span class="text-white font-bold text-xs">Л</span>
         </div>
@@ -86,7 +87,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, nextTick, watch, onBeforeUnmount } from 'vue'
 import { useAssistantStore } from '@/stores/assistant'
 import ChatMessage from '@/components/assistant/ChatMessage.vue'
 import ChatInput from '@/components/assistant/ChatInput.vue'
@@ -94,6 +95,12 @@ import { Square } from 'lucide-vue-next'
 
 const store = useAssistantStore()
 const messagesEl = ref(null)
+
+const streamingEmpty = computed(() => {
+  if (!store.streaming) return false
+  const last = store.messages[store.messages.length - 1]
+  return last?.role === 'assistant' && !last.content
+})
 
 const quickPrompts = [
   'Как прошёл мой день?',

@@ -28,6 +28,19 @@ const router = createRouter({
         { path: 'settings', name: 'settings', component: () => import('@/views/SettingsView.vue') },
       ],
     },
+    {
+      path: '/admin',
+      component: () => import('@/components/layout/AdminLayout.vue'),
+      meta: { admin: true },
+      children: [
+        { path: '', name: 'admin-dashboard', component: () => import('@/views/admin/AdminDashboard.vue') },
+        { path: 'users', name: 'admin-users', component: () => import('@/views/admin/AdminUsers.vue') },
+        { path: 'users/:id', name: 'admin-user-detail', component: () => import('@/views/admin/AdminUserDetail.vue'), props: true },
+        { path: 'roles', name: 'admin-roles', component: () => import('@/views/admin/AdminRoles.vue') },
+        { path: 'assistant', name: 'admin-assistant', component: () => import('@/views/admin/AdminAssistant.vue') },
+        { path: 'audit', name: 'admin-audit', component: () => import('@/views/admin/AdminAudit.vue') },
+      ],
+    },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
 })

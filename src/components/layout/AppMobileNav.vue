@@ -69,6 +69,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import {
   Home,
   Heart,
@@ -82,9 +83,11 @@ import {
   Sparkles,
   Fingerprint,
   Settings,
+  Shield,
 } from 'lucide-vue-next'
 
 const route = useRoute()
+const auth = useAuthStore()
 const menuOpen = ref(false)
 
 const mainItems = [
@@ -94,7 +97,7 @@ const mainItems = [
   { to: '/tasks', label: 'Задачи', icon: CheckSquare },
 ]
 
-const moreItems = [
+const baseMoreItems = [
   { to: '/notes', label: 'Заметки', icon: BookOpen },
   { to: '/cbt', label: 'КПТ', icon: Brain },
   { to: '/reports', label: 'Аналитика', icon: BarChart3 },
@@ -103,14 +106,21 @@ const moreItems = [
   { to: '/settings', label: 'Настройки', icon: Settings },
 ]
 
-const morePaths = moreItems.map(i => i.to)
+const moreItems = computed(() => {
+  if (auth.isAdmin) {
+    return [...baseMoreItems, { to: '/admin', label: 'Админ', icon: Shield }]
+  }
+  return baseMoreItems
+})
+
+const morePaths = computed(() => moreItems.value.map(i => i.to))
 
 function isActive(path) {
   if (path === '/') return route.path === '/'
   return route.path.startsWith(path)
 }
 
-const moreIsActive = computed(() => morePaths.some(p => route.path.startsWith(p)))
+const moreIsActive = computed(() => morePaths.value.some(p => route.path.startsWith(p)))
 </script>
 
 <style scoped>
