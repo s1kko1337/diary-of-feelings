@@ -1,34 +1,102 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { getHistory, sendMessage as apiSend, clearHistory as apiClear, sendMessageStream } from '@/api/assistant'
+import {
+  getHistory,
+  sendMessage as apiSend,
+  sendMessageStream,
+  getConversations as apiGetConversations,
+  createConversation as apiCreateConversation,
+  renameConversation as apiRenameConversation,
+  deleteConversation as apiDeleteConversation,
+} from '@/api/assistant'
 
 const PENDING_KEY = 'dof-chat-pending'
 
 export const useAssistantStore = defineStore('assistant', () => {
+  // Messages state
   const messages = ref([])
   const sending = ref(false)
   const streaming = ref(false)
   const loaded = ref(false)
   const abortController = ref(null)
 
+  // Conversations state
+  const conversations = ref([])
+  const activeConversationId = ref(null)
+  const conversationsLoaded = ref(false)
+
   // Typewriter state (fallback for non-streaming)
   const typewriter = ref(null)
   const isTypewriting = computed(() => !!typewriter.value)
 
-  async function loadHistory() {
-    messages.value = await getHistory()
+  // ── Conversations ──────────────────────────────────────
+
+  async function loadConversations() {
+    const res = await apiGetConversations()
+    conversations.value = res.items ?? res
+    conversationsLoaded.value = true
+  }
+
+  async function createConversation(title = null) {
+    const conv = await apiCreateConversation(title)
+    conversations.value.unshift(conv)
+    activeConversationId.value = conv.id
+    messages.value = []
+    loaded.value = true
+    return conv
+  }
+
+  async function selectConversation(id) {
+    if (activeConversationId.value === id) return
+    stopTypewriter()
+    stopStream()
+    activeConversationId.value = id
+    loaded.value = false
+    await loadHistory(id)
+  }
+
+  async function renameConversation(id, title) {
+    const conv = await apiRenameConversation(id, title)
+    const idx = conversations.value.findIndex(c => c.id === id)
+    if (idx !== -1) conversations.value[idx] = { ...conversations.value[idx], title: conv.title }
+    return conv
+  }
+
+  async function deleteConversation(id) {
+    stopTypewriter()
+    stopStream()
+    await apiDeleteConversation(id)
+    conversations.value = conversations.value.filter(c => c.id !== id)
+    localStorage.removeItem(PENDING_KEY)
+
+    if (activeConversationId.value === id) {
+      if (conversations.value.length) {
+        await selectConversation(conversations.value[0].id)
+      } else {
+        await createConversation()
+      }
+    }
+  }
+
+  // ── Messages ───────────────────────────────────────────
+
+  async function loadHistory(conversationId) {
+    const cid = conversationId || activeConversationId.value
+    if (!cid) return
+    messages.value = await getHistory(cid)
     loaded.value = true
 
+    // Restore typewriter state if pending for this conversation
     try {
       const pending = JSON.parse(localStorage.getItem(PENDING_KEY))
-      if (pending?.status === 'sending' && Date.now() - pending.sentAt < 120000) {
-        const last = messages.value[messages.value.length - 1]
-        if (last?.role === 'assistant') {
-          startTypewriter(messages.value.length - 1, last.content)
-        } else {
-          localStorage.removeItem(PENDING_KEY)
-        }
-      } else if (pending?.status === 'typing') {
+      if (pending?.conversationId !== cid) {
+        localStorage.removeItem(PENDING_KEY)
+        return
+      }
+      if (
+        (pending?.status === 'sending' && Date.now() - pending.sentAt < 120000) ||
+        pending?.status === 'typing'
+      ) {
         const last = messages.value[messages.value.length - 1]
         if (last?.role === 'assistant') {
           startTypewriter(messages.value.length - 1, last.content)
@@ -44,12 +112,14 @@ export const useAssistantStore = defineStore('assistant', () => {
   }
 
   async function sendStream(content) {
+    const cid = activeConversationId.value
+    if (!cid) return
+
     sending.value = true
     streaming.value = true
     const userMsg = { role: 'user', content, createdAt: new Date().toISOString() }
     messages.value.push(userMsg)
 
-    // Create empty assistant message that will be filled by streaming
     const assistantMsg = { role: 'assistant', content: '', createdAt: new Date().toISOString() }
     messages.value.push(assistantMsg)
     const msgIndex = messages.value.length - 1
@@ -60,6 +130,7 @@ export const useAssistantStore = defineStore('assistant', () => {
     try {
       await sendMessageStream(
         content,
+        cid,
         (token) => {
           messages.value[msgIndex] = {
             ...messages.value[msgIndex],
@@ -68,14 +139,13 @@ export const useAssistantStore = defineStore('assistant', () => {
         },
         ac.signal,
       )
+      // Update conversation in sidebar (bump to top, show assistant response as preview)
+      const assistantContent = messages.value[msgIndex]?.content
+      _bumpConversation(cid, assistantContent || content)
     } catch (err) {
-      if (err.name === 'AbortError') {
-        // User stopped — keep what we have
-        return
-      }
-      // Remove the empty assistant message and fallback to non-streaming
+      if (err.name === 'AbortError') return
       messages.value.splice(msgIndex, 1)
-      messages.value.pop() // remove user msg
+      messages.value.pop()
       streaming.value = false
       return send(content)
     } finally {
@@ -95,6 +165,9 @@ export const useAssistantStore = defineStore('assistant', () => {
   }
 
   async function send(content) {
+    const cid = activeConversationId.value
+    if (!cid) return
+
     sending.value = true
     const userMsg = { role: 'user', content, createdAt: new Date().toISOString() }
     messages.value.push(userMsg)
@@ -103,13 +176,18 @@ export const useAssistantStore = defineStore('assistant', () => {
       status: 'sending',
       sentAt: Date.now(),
       userContent: content,
+      conversationId: cid,
     }))
 
     try {
-      const response = await apiSend(content)
-      messages.value.push(response)
-      localStorage.setItem(PENDING_KEY, JSON.stringify({ status: 'typing' }))
-      startTypewriter(messages.value.length - 1, response.content)
+      const response = await apiSend(content, cid)
+      messages.value.push(response.assistantMessage)
+      localStorage.setItem(PENDING_KEY, JSON.stringify({
+        status: 'typing',
+        conversationId: cid,
+      }))
+      startTypewriter(messages.value.length - 1, response.assistantMessage.content)
+      _bumpConversation(cid, response.assistantMessage?.content || content)
       return response
     } catch (err) {
       messages.value.pop()
@@ -119,6 +197,24 @@ export const useAssistantStore = defineStore('assistant', () => {
       sending.value = false
     }
   }
+
+  function _bumpConversation(cid, lastContent) {
+    const idx = conversations.value.findIndex(c => c.id === cid)
+    if (idx > 0) {
+      const [conv] = conversations.value.splice(idx, 1)
+      conv.lastMessage = lastContent?.slice(0, 100)
+      conv.updatedAt = new Date().toISOString()
+      conversations.value.unshift(conv)
+    } else if (idx === 0) {
+      conversations.value[0] = {
+        ...conversations.value[0],
+        lastMessage: lastContent?.slice(0, 100),
+        updatedAt: new Date().toISOString(),
+      }
+    }
+  }
+
+  // ── Typewriter ─────────────────────────────────────────
 
   function startTypewriter(msgIndex, fullText) {
     stopTypewriter()
@@ -168,18 +264,15 @@ export const useAssistantStore = defineStore('assistant', () => {
     return typewriter.value?.msgIndex === index && typewriter.value.charIndex < typewriter.value.fullText.length
   }
 
-  async function clearAll() {
-    stopTypewriter()
-    stopStream()
-    await apiClear()
-    messages.value = []
-    localStorage.removeItem(PENDING_KEY)
-  }
-
   return {
+    // Messages
     messages, sending, streaming, loaded, isTypewriting,
-    loadHistory, send, sendStream, stopStream, clearAll,
+    loadHistory, send, sendStream, stopStream,
     startTypewriter, stopTypewriter, skipTypewriter, finishTypewriter,
     getDisplayText, isTypingAt,
+    // Conversations
+    conversations, activeConversationId, conversationsLoaded,
+    loadConversations, createConversation, selectConversation,
+    renameConversation, deleteConversation,
   }
 })

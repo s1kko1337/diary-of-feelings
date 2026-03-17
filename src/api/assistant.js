@@ -1,26 +1,43 @@
 import { api, BASE_URL } from './client.js'
 
-export async function getHistory() {
-  const res = await api.get('/assistant/history')
+// ── Conversations ──────────────────────────────────────────
+
+export function getConversations(page = 1, perPage = 20) {
+  return api.get(`/assistant/conversations?page=${page}&per_page=${perPage}`)
+}
+
+export function createConversation(title = null) {
+  return api.post('/assistant/conversations', { title })
+}
+
+export function renameConversation(id, title) {
+  return api.patch(`/assistant/conversations/${id}`, { title })
+}
+
+export function deleteConversation(id) {
+  return api.delete(`/assistant/conversations/${id}`)
+}
+
+// ── Chat ───────────────────────────────────────────────────
+
+export async function getHistory(conversationId) {
+  const res = await api.get(`/assistant/history?conversation_id=${conversationId}`)
   return res.items ?? res
 }
 
-export function sendMessage(content) {
-  return api.post('/assistant/chat', { content })
-}
-
-export function clearHistory() {
-  return api.delete('/assistant/history')
+export function sendMessage(content, conversationId) {
+  return api.post('/assistant/chat', { content, conversation_id: conversationId })
 }
 
 /**
  * SSE streaming chat. Calls onToken(text) for each token, returns full text on completion.
  * @param {string} content
+ * @param {string} conversationId
  * @param {(token: string) => void} onToken
  * @param {AbortSignal} [signal]
  * @returns {Promise<string>}
  */
-export async function sendMessageStream(content, onToken, signal) {
+export async function sendMessageStream(content, conversationId, onToken, signal) {
   const token = localStorage.getItem('dof-token')
   const res = await fetch(`${BASE_URL}/assistant/chat/stream`, {
     method: 'POST',
@@ -28,7 +45,7 @@ export async function sendMessageStream(content, onToken, signal) {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify({ content }),
+    body: JSON.stringify({ content, conversation_id: conversationId }),
     signal,
   })
 
