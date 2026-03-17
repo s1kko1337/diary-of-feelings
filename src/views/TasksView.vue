@@ -30,7 +30,7 @@
     <div class="bg-white rounded-2xl p-4 border border-ink-100 shadow-sm">
       <TaskInput @add="handleAdd" />
       <!-- Color + Priority selector -->
-      <div class="flex items-center gap-3 mt-3 pt-3 border-t border-ink-100">
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-2 mt-3 pt-3 border-t border-ink-100">
         <span class="text-xs text-ink-400">Цвет:</span>
         <div class="flex gap-1.5">
           <button
@@ -42,7 +42,7 @@
             :title="c.label"
           />
         </div>
-        <span class="text-xs text-ink-400 ml-auto">Приоритет:</span>
+        <span class="text-xs text-ink-400 sm:ml-auto">Приоритет:</span>
         <div class="flex gap-1">
           <button
             v-for="p in priorities"
