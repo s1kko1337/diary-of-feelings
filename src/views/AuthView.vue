@@ -16,18 +16,12 @@
         <p class="text-terra-200 text-lg leading-relaxed font-light">
           Пространство для рефлексии, осознанности и заботы о себе
         </p>
-        <div class="flex justify-center gap-8 mt-10 text-terra-300 text-sm">
-          <div class="text-center">
-            <p class="text-2xl font-display font-bold text-white">AI</p>
-            <p>Ассистент</p>
-          </div>
-          <div class="text-center">
-            <p class="text-2xl font-display font-bold text-white">КПТ</p>
-            <p>Дневник</p>
-          </div>
-          <div class="text-center">
-            <p class="text-2xl font-display font-bold text-white">\u221E</p>
-            <p>Инсайты</p>
+        <div class="flex justify-center gap-6 mt-10">
+          <div v-for="feat in features" :key="feat.label" class="text-center">
+            <div class="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center mx-auto mb-2 backdrop-blur-sm">
+              <component :is="feat.icon" class="w-5 h-5 text-white" />
+            </div>
+            <p class="text-xs text-terra-200 font-medium">{{ feat.label }}</p>
           </div>
         </div>
       </div>
@@ -127,9 +121,18 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { MessageSquare, Brain, Heart, BarChart3, BookOpen } from 'lucide-vue-next'
 
 const router = useRouter()
 const auth = useAuthStore()
+
+const features = [
+  { icon: MessageSquare, label: 'AI-ассистент' },
+  { icon: Brain, label: 'КПТ-дневник' },
+  { icon: Heart, label: 'Эмоции' },
+  { icon: BarChart3, label: 'Аналитика' },
+  { icon: BookOpen, label: 'Рекомендации' },
+]
 
 const mode = ref('login')
 const error = ref('')

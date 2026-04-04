@@ -142,10 +142,15 @@ export const useAssistantStore = defineStore('assistant', () => {
       // Update conversation in sidebar (bump to top, show assistant response as preview)
       const assistantContent = messages.value[msgIndex]?.content
       _bumpConversation(cid, assistantContent || content)
+      // Refresh conversations after delay to pick up auto-generated title
+      const conv = conversations.value.find(c => c.id === cid)
+      if (conv && !conv.title) {
+        setTimeout(() => loadConversations(), 3000)
+      }
     } catch (err) {
       if (err.name === 'AbortError') return
-      messages.value.splice(msgIndex, 1)
-      messages.value.pop()
+      // Remove both user + empty assistant messages before non-stream retry
+      messages.value.splice(messages.value.length - 2, 2)
       streaming.value = false
       return send(content)
     } finally {
@@ -188,6 +193,11 @@ export const useAssistantStore = defineStore('assistant', () => {
       }))
       startTypewriter(messages.value.length - 1, response.assistantMessage.content)
       _bumpConversation(cid, response.assistantMessage?.content || content)
+      // Refresh conversations after delay to pick up auto-generated title
+      const conv = conversations.value.find(c => c.id === cid)
+      if (conv && !conv.title) {
+        setTimeout(() => loadConversations(), 3000)
+      }
       return response
     } catch (err) {
       messages.value.pop()

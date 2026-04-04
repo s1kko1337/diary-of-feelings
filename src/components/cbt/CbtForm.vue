@@ -34,27 +34,34 @@
       </div>
 
       <!-- Step 2: Emotions -->
-      <div v-if="step === 2" class="space-y-3">
-        <div v-for="(em, i) in form.emotions" :key="i" class="flex items-center gap-2">
-          <input
-            v-model="em.name"
-            placeholder="Эмоция"
-            class="flex-1 rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm focus:border-terra-400 focus:outline-none"
-          />
-          <input
-            v-model.number="em.intensity"
-            type="number"
-            min="0"
-            max="10"
-            class="w-16 rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm text-center focus:border-terra-400 focus:outline-none"
-          />
-          <button @click="form.emotions.splice(i, 1)" class="text-ink-400 hover:text-rose-500 p-1">
+      <div v-if="step === 2" class="space-y-4">
+        <!-- Added emotions list -->
+        <div v-for="(em, i) in form.emotions" :key="i" class="flex items-center gap-2 bg-cream-100 rounded-xl px-3 py-2">
+          <span class="flex-1 text-sm font-medium text-ink-700">{{ em.name }}</span>
+          <div class="flex items-center gap-1.5">
+            <button @click="em.intensity = Math.max(0, em.intensity - 1)" class="w-6 h-6 rounded-full bg-white border border-ink-200 text-ink-500 text-xs flex items-center justify-center hover:bg-ink-100">−</button>
+            <span class="text-sm font-bold text-ink-700 w-5 text-center tabular-nums">{{ em.intensity }}</span>
+            <button @click="em.intensity = Math.min(10, em.intensity + 1)" class="w-6 h-6 rounded-full bg-white border border-ink-200 text-ink-500 text-xs flex items-center justify-center hover:bg-ink-100">+</button>
+          </div>
+          <button @click="form.emotions.splice(i, 1)" class="text-ink-400 hover:text-rose-500 p-1 ml-1">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
           </button>
         </div>
-        <button @click="form.emotions.push({ name: '', intensity: 5 })" class="text-sm text-terra-500 hover:text-terra-600 font-medium">
-          + Добавить эмоцию
-        </button>
+
+        <!-- Emotion picker pills -->
+        <div class="space-y-2">
+          <p class="text-xs text-ink-400">Выберите эмоцию:</p>
+          <div class="flex flex-wrap gap-1.5">
+            <button
+              v-for="name in availableEmotions"
+              :key="name"
+              @click="addEmotion(name)"
+              class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all border border-ink-200 bg-white text-ink-600 hover:bg-terra-500/10 hover:border-terra-400 hover:text-terra-600"
+            >
+              {{ name }}
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Step 3: Distortions -->
@@ -118,7 +125,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import BaseModal from '@/components/ui/BaseModal.vue'
 
 const props = defineProps({
@@ -131,7 +138,7 @@ const step = ref(0)
 const form = reactive({
   situation: '',
   thoughts: '',
-  emotions: [{ name: '', intensity: 5 }],
+  emotions: [],
   distortions: [],
   challenging: '',
   alternativeThought: '',
@@ -145,6 +152,23 @@ const steps = [
   { title: 'Оспаривание', placeholder: 'Как можно оспорить эти мысли? Какие факты против?' },
   { title: 'Альтернативная мысль', placeholder: 'Более сбалансированная мысль...' },
 ]
+
+const allEmotions = [
+  'Радость', 'Счастье', 'Благодарность', 'Надежда', 'Вдохновение',
+  'Грусть', 'Тоска', 'Одиночество', 'Разочарование', 'Печаль',
+  'Злость', 'Раздражение', 'Гнев', 'Обида', 'Фрустрация',
+  'Тревога', 'Волнение', 'Напряжение', 'Стресс', 'Беспокойство',
+  'Страх', 'Паника', 'Неуверенность', 'Опасение',
+  'Отвращение', 'Скука', 'Апатия',
+]
+
+const availableEmotions = computed(() =>
+  allEmotions.filter(name => !form.emotions.some(e => e.name === name))
+)
+
+function addEmotion(name) {
+  form.emotions.push({ name, intensity: 5 })
+}
 
 const distortionsList = [
   'Катастрофизация',
@@ -164,7 +188,7 @@ watch(() => props.initial, (val) => {
     Object.assign(form, {
       situation: val.situation || '',
       thoughts: val.thoughts || '',
-      emotions: val.emotions?.length ? [...val.emotions] : [{ name: '', intensity: 5 }],
+      emotions: val.emotions?.length ? [...val.emotions] : [],
       distortions: val.distortions ? [...val.distortions] : [],
       challenging: val.challenging || '',
       alternativeThought: val.alternativeThought || '',
@@ -178,7 +202,7 @@ watch(() => props.open, (val) => {
     Object.assign(form, {
       situation: '',
       thoughts: '',
-      emotions: [{ name: '', intensity: 5 }],
+      emotions: [],
       distortions: [],
       challenging: '',
       alternativeThought: '',

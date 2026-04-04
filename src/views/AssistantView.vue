@@ -120,7 +120,7 @@
         <!-- Messages -->
         <ChatMessage
           v-for="(msg, i) in store.messages"
-          :key="i"
+          :key="msg.id || i"
           v-show="!(store.streaming && msg.role === 'assistant' && !msg.content)"
           :message="msg"
           :displayText="store.getDisplayText(i)"
@@ -248,6 +248,7 @@ async function handleRename({ id, title }) {
 }
 
 async function handleDelete(id) {
+  if (!confirm('Удалить беседу? Все сообщения будут потеряны.')) return
   await store.deleteConversation(id)
 }
 </script>
